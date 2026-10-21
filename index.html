@@ -78,6 +78,7 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
 .vg b{font-weight:600;font-size:13px;word-break:break-word}
 .vs{padding-top:14px}.vs p{white-space:pre-wrap;word-break:break-word;line-height:1.5;font-size:13px}
 .li{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 8px}
+[data-theme=light] th{background:#e2e2e7;color:#4a4a52;border-bottom-color:#cfcfd6}
 /* chat */
 .nb{position:absolute;top:2px;right:0;background:var(--dg);color:#fff;font-size:9px;min-width:14px;height:14px;line-height:14px;text-align:center;padding:0 3px;font-weight:700}
 #chat{position:fixed;right:20px;bottom:20px;width:440px;height:480px;min-width:340px;min-height:300px;max-width:96vw;max-height:94vh;background:var(--bg2);border:1px solid var(--bd);box-shadow:0 8px 28px #0006;z-index:60;display:none;flex-direction:column;resize:both;overflow:hidden}
@@ -108,7 +109,7 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
   <div class="lg"><img class="logo" data-logo alt="Servis"></div>
   <h1 id="l-t">Acesso ao Sistema</h1>
   <div class="fg hide" id="l-n"><input id="l-nome" placeholder="Seu nome"></div>
-  <div class="fg"><input id="l-email" type="email" placeholder="E-mail"></div>
+  <div class="fg"><input id="l-email" type="email" placeholder="E-mail (@servis.com)"></div>
   <div class="fg"><input id="l-pass" type="password" placeholder="Senha"></div>
   <button class="btn p" style="width:100%" id="l-go">Entrar</button>
   <p id="l-err" style="color:var(--dg);margin-top:12px;font-size:12px"></p>
@@ -158,6 +159,7 @@ const themeUI=()=>{const l=document.documentElement.dataset.theme==='light';$('t
 
 const S={user:null,tab:'abertas',q:'',st:'',uf:'',pe:'',d1:'',d2:'',cf:'',ac:'',lu:'',page:0,ab:{},co:{},cd:{},rs:{},ux:{},us:{},lg:{},pr:{},ch:{},cdOn:0,cdDone:0,cdArr:null,lgOn:0};
 const PROBS=['INTERFONE','CÂMERAS','CONEXÃO','COMANDOS','FACIAL','APP','PORTÃO','EVENTO','FÍSICO'],STATUS=['CENTRAL','SITUATOR','GEAR'];
+const DOM='@servis.com',mail=v=>{v=String(v||'').trim().toLowerCase();return !v?'':v.includes('@')?v:v+DOM},okMail=v=>v.endsWith(DOM)&&v.length>DOM.length&&!/\s/.test(v);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=d=>d?new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'-';
 const hash=s=>{let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return h.toString(36)};
@@ -210,11 +212,11 @@ async function initLogin(){
   $('l-n').classList.toggle('hide',!setup);$('l-t').textContent=setup?'Primeiro acesso: crie o administrador':'Acesso ao Sistema';$('l-go').textContent=setup?'Criar e entrar':'Entrar';
 }
 async function doLogin(){
-  const email=$('l-email').value.trim().toLowerCase(),pw=$('l-pass').value,err=$('l-err');err.textContent='';
+  const email=mail($('l-email').value),pw=$('l-pass').value,err=$('l-err');err.textContent='';
   if(!email||!pw)return err.textContent='Informe e-mail e senha.';
   await usOk;const h=await sha(pw);
   if(setup){
-    const nome=$('l-nome').value.trim().toUpperCase();if(!nome)return err.textContent='Informe seu nome.';
+    const nome=$('l-nome').value.trim().toUpperCase();if(!nome)return err.textContent='Informe seu nome.';if(!okMail(email))return err.textContent='Use um e-mail @servis.com.';
     const u={nome,email,perfil:'admin',senha:h},id='u'+hash(email);
     try{await update(R('usuarios/'+id),u)}catch(e){return err.textContent=e.message}
     return enter({id,...u},1);
@@ -380,8 +382,9 @@ const acts={
   novoc:()=>modal('Novo Condomínio',[{k:'nome',n:'Nome *'},{k:'uf',n:'UF *',t:'uf'}],v=>{v.nome=v.nome.toUpperCase();if(!v.nome||!v.uf){toast('Preencha nome e UF.',1);return false}
     update(R('condominios/c'+hash(v.nome+v.uf)),v).catch(fail);log('Cadastrou condomínio',v.nome+' ('+v.uf+')')}),
   novor:()=>modal('Novo Responsável',[{k:'nome',n:'Nome *'}],v=>{v.nome=v.nome.toUpperCase();if(!v.nome)return false;update(R('responsaveis/r'+hash(v.nome)),v).catch(fail);log('Cadastrou responsável',v.nome)}),
-  novou:()=>modal('Novo Usuário',[{k:'nome',n:'Nome *'},{k:'email',n:'E-mail *',t:'email'},{k:'senha',n:'Senha *',t:'password'},{k:'perfil',n:'Perfil',t:'select',o:['observador','editor','admin']}],async v=>{
+  novou:()=>modal('Novo Usuário',[{k:'nome',n:'Nome *'},{k:'email',n:'E-mail * (somente @servis.com)'},{k:'senha',n:'Senha *',t:'password'},{k:'perfil',n:'Perfil',t:'select',o:['observador','editor','admin']}],async v=>{
     if(!v.nome||!v.email||!v.senha){toast('Preencha todos os campos.',1);return false}
+    v.email=mail(v.email);if(!okMail(v.email)){toast('O e-mail deve ser @servis.com.',1);return false}
     update(R('usuarios/u'+hash(v.email.toLowerCase())),{nome:v.nome.toUpperCase(),email:v.email.toLowerCase(),perfil:v.perfil,senha:await sha(v.senha)}).catch(fail);log('Cadastrou usuário',v.email+' ('+v.perfil+')')}),
   import:()=>{closeMod();const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importar(i.files[0]);i.click()},
   export:async(id)=>{
