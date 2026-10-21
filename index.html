@@ -66,9 +66,18 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
 #toast.on{opacity:1}#toast.er{border-color:var(--dg)}
 #bar input[type=date]{min-width:0;font-size:11px;letter-spacing:.5px;color:var(--tx2);cursor:pointer}
 [data-theme=dark] #bar input[type=date]{color-scheme:dark}
+.tm{color:var(--tx2);font-size:12px;font-variant-numeric:tabular-nums;letter-spacing:.3px}
 .pri{color:var(--pr);display:inline-flex;vertical-align:middle;margin-right:6px}.pri svg{width:16px;height:16px;stroke-width:2}
 .pri,.ib[data-pri]{animation:bk 1s ease-in-out infinite}.ib[data-pri]{color:var(--pr)}.ib[data-pri] svg{stroke-width:2}
 @keyframes bk{0%,100%{opacity:1;filter:drop-shadow(0 0 5px var(--pr))}50%{opacity:.2;filter:none}}
+.vw{max-width:600px;padding:22px 24px}
+.vt{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding-right:32px}.vtm{margin-left:auto;color:var(--tx2);font-size:11px;letter-spacing:.5px;text-transform:uppercase}.vtm .tm{font-size:13px;color:var(--tx);text-transform:none}
+.md .vh{font-size:19px;line-height:1.3;margin-bottom:18px}
+.vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 20px;padding:14px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.vg label,.vs label{display:block;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--tx2);margin-bottom:3px;font-weight:600}
+.vg b{font-weight:600;font-size:13px;word-break:break-word}
+.vs{padding-top:14px}.vs p{white-space:pre-wrap;word-break:break-word;line-height:1.5;font-size:13px}
+.li{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 8px}
 /* chat */
 .nb{position:absolute;top:2px;right:0;background:var(--dg);color:#fff;font-size:9px;min-width:14px;height:14px;line-height:14px;text-align:center;padding:0 3px;font-weight:700}
 #chat{position:fixed;right:20px;bottom:20px;width:440px;height:480px;min-width:340px;min-height:300px;max-width:96vw;max-height:94vh;background:var(--bg2);border:1px solid var(--bd);box-shadow:0 8px 28px #0006;z-index:60;display:none;flex-direction:column;resize:both;overflow:hidden}
@@ -112,6 +121,7 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
     <div style="position:relative"><button class="ib" data-act="menu" title="Menu"><i data-i="gear"></i><b class="nb hide" id="c-n1"></b></button>
       <div id="menu" class="menu hide">
         <div class="user" style="padding:8px 12px"><b id="u-n">-</b><small id="u-p"></small></div><hr class="mh"><div id="menu-tabs"></div><hr class="mh">
+        <button data-act="trocas"><i data-i="down"></i>Importar / Exportar</button>
         <button data-act="chat"><i data-i="chat"></i>Chat<b class="nb hide" id="c-n3"></b></button>
         <button data-act="theme"><i id="th-i"></i><span id="th-t">Tema claro</span></button>
         <button data-act="logout"><i data-i="out"></i>Sair</button>
@@ -240,15 +250,14 @@ function renderBar(){
   const sr=`<input id="q" placeholder="Buscar…" value="${esc(S.q)}">`;
   const ufo=`<select id="ufs"><option value="">Todas UFs</option>${ufs().map(u=>`<option ${S.uf===u?'selected':''}>${u}</option>`).join('')}</select>`;
   const sto=`<select id="sts"><option value="">Todos os status</option>${STATUS.map(u=>`<option ${S.st===u?'selected':''}>${u}</option>`).join('')}</select>`;
-  const ex=IB('export','up','Exportar');
   const PER=[['','Todo período'],['hoje','Hoje'],['7','7 dias'],['30','30 dias'],['mes','Este mês'],['ano','Este ano']];
   const peo=`<select id="pes">${PER.map(([v,n])=>`<option value="${v}" ${S.pe===v?'selected':''}>${n}</option>`).join('')}</select>`;
   const dts=`<input type="date" id="d1" title="De" value="${S.d1}"><input type="date" id="d2" title="Até" value="${S.d2}">`;
   const aco=`<select id="acs"><option value="">Todos os tipos</option>${Object.keys(TIPOS).map(k=>`<option ${S.ac===k?'selected':''}>${k}</option>`).join('')}</select>`,uso=`<select id="lus">${logOpts('u',S.lu,'Todos os usuários')}</select>`;
   const cfo=`<select id="cfs"><option value="">Todos</option><option value="ab" ${S.cf==='ab'?'selected':''}>Com demanda aberta</option></select>`;
-  $('bar').innerHTML={abertas:sr+sto+ufo+`<span class="sp"></span>${ed?IB('nova','plus','Nova demanda')+IB('import','down','Importar planilha'):''}${ex}`,
-    concluidas:sr+peo+dts+ufo+`<span class="sp"></span>${ex}`,condominios:sr+ufo+cfo+`<span class="sp"></span>${ed?IB('novoc','plus','Novo condomínio'):''}${ex}`,
-    responsaveis:sr+`<span class="sp"></span>${ed?IB('novor','plus','Novo responsável'):''}${ex}`,
+  $('bar').innerHTML={abertas:sr+sto+ufo+`<span class="sp"></span>${ed?IB('nova','plus','Nova demanda'):''}`,
+    concluidas:sr+peo+dts+ufo+`<span class="sp"></span>`,condominios:sr+ufo+cfo+`<span class="sp"></span>${ed?IB('novoc','plus','Novo condomínio'):''}`,
+    responsaveis:sr+`<span class="sp"></span>${ed?IB('novor','plus','Novo responsável'):''}`,
     usuarios:sr+`<span class="sp"></span>${IB('novou','plus','Novo usuário')}`,logs:sr+peo+dts+aco+uso+`<span class="sp"></span>`}[t];
   let dt;const q=$('q');if(q)q.oninput=e=>{clearTimeout(dt);const v=e.target.value;dt=setTimeout(()=>{S.q=v;S.page=0;render()},120)};
   const u=$('ufs');if(u)u.onchange=e=>{S.uf=e.target.value;S.page=0;render()};
@@ -276,6 +285,8 @@ function rows(){
   if(t==='usuarios')return arr(S.us).filter(x=>hit({n:x.nome,e:x.email},q));
   {const[a,b]=rng();return arr(S.lg).filter(x=>{const m=new Date(x.t).getTime();return hit(x,q)&&(!S.ac||TIPOS[S.ac].test(x.a||''))&&(!S.lu||x.u===S.lu)&&m>=a&&m<=b}).sort((a,b)=>b.t.localeCompare(a.t))}
 }
+const dur=ms=>{if(!(ms>0))return'00:00:00';const t=Math.floor(ms/1e3),d=Math.floor(t/86400),p=n=>String(n).padStart(2,'0');return(d?d+'d ':'')+p(Math.floor(t%86400/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60)};
+setInterval(()=>{if(S.tab!=='abertas'||document.hidden)return;const n=Date.now();document.querySelectorAll('.tm').forEach(e=>e.textContent=dur(n-e.dataset.t))},1000);
 const tbl=(h,b)=>`<div class="tw"><table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${b}</tbody></table></div>`;
 const del=(k,id)=>IB('del','trash','Excluir',id,`data-k="${k}"`);
 function render(){
@@ -285,7 +296,7 @@ function render(){
   const l=rows();
   if(!l.length&&['abertas','concluidas'].includes(t)){$('list').innerHTML=`<div class="emp"><b>Nenhuma demanda ${t==='abertas'?'aberta':'concluída'}</b>${t==='abertas'?'Clique em "Nova" para registrar uma demanda em tratamento.':'O histórico aparecerá aqui.'}</div>`;return}
   const p=l.slice(S.page*PS,S.page*PS+PS);let h='';
-  if(t==='abertas')h=tbl(['Data','UF','Condomínio','Descrição','Problema','Responsável','Status','Tratativa',''],p.map(x=>`<tr data-act="view" data-id="${x.id}"><td>${fmt(x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${x.prioridade==='SIM'?`<span class="pri" title="Prioridade">${ico('alert')}</span>`:''}${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td>${esc(x.status)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td><span class="acts">${ed?IB('prio','alert',x.prioridade==='SIM'?'Remover prioridade':'Marcar prioridade',x.id,x.prioridade==='SIM'?'data-pri="1"':'')+IB('edit','edit','Editar',x.id)+IB('done','check','Concluir',x.id)+del('demandas_abertas',x.id):''}</span></td></tr>`).join(''));
+  if(t==='abertas')h=tbl(['Data','UF','Condomínio','Descrição','Problema','Responsável','Status','Tratativa','Tempo',''],p.map(x=>`<tr data-act="view" data-id="${x.id}"><td>${fmt(x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${x.prioridade==='SIM'?`<span class="pri" title="Prioridade">${ico('alert')}</span>`:''}${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td>${esc(x.status)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td><span class="tm" data-t="${new Date(x.data||0).getTime()}">${dur(Date.now()-new Date(x.data||0).getTime())}</span></td><td><span class="acts">${ed?IB('prio','alert',x.prioridade==='SIM'?'Remover prioridade':'Marcar prioridade',x.id,x.prioridade==='SIM'?'data-pri="1"':'')+IB('edit','edit','Editar',x.id)+IB('done','check','Concluir',x.id)+del('demandas_abertas',x.id):''}</span></td></tr>`).join(''));
   if(t==='concluidas')h=tbl(['Conclusão','UF','Condomínio','Descrição','Problema','Responsável','Tratativa','Técnico',''],p.map(x=>`<tr data-act="view" data-c="1" data-id="${x.id}"><td>${fmt(x.dataConclusao||x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td>${esc(x.tecnico)}</td><td><span class="acts">${ed?IB('reopen','undo','Reabrir',x.id):''}${admin()?del('demandas_concluidas',x.id):''}</span></td></tr>`).join(''));
   if(t==='condominios')h=tbl(['Condomínio','UF',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td><span class="tag">${esc(x.uf)}</span></td><td>${ed?del('condominios',x.id):''}</td></tr>`).join(''));
   if(t==='responsaveis')h=tbl(['Nome',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td>${ed?del('responsaveis',x.id):''}</td></tr>`).join(''));
@@ -352,10 +363,15 @@ const acts={
   logout:()=>{log('Logout');update(R('presenca'),{[S.user.id]:null}).catch(()=>{});localStorage.removeItem('ds_user');setTimeout(()=>location.reload(),150)},
   pg:id=>{S.page=Math.max(0,S.page+ +id);render()},
   prio:id=>{const d=S.ab[id];if(!d)return;const on=d.prioridade==='SIM';update(R('demandas_abertas/'+id),{prioridade:on?'':'SIM'}).catch(fail);log(on?'Removeu prioridade':'Marcou prioridade',desc(d))},
+  trocas:()=>{const E=[['abertas','Demandas abertas'],['concluidas','Demandas concluídas'],['condominios','Condomínios'],['responsaveis','Responsáveis']];
+    $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>Importar / Exportar</h2><div class="vs" style="padding-top:0"><label>Exportar para Excel</label>${E.map(([k,n])=>`<button class="btn li" data-act="export" data-id="${k}">${ico('up')}${n}</button>`).join('')}</div>${canEdit()?`<div class="vs"><label>Importar</label><button class="btn li" data-act="import">${ico('down')}Planilha (abas CENTRAL / CONCLUIDO)</button></div>`:''}</div></div>`;$('m-c').onclick=closeMod},
   nova:()=>formDemanda(),edit:id=>formDemanda({id,...S.ab[id]}),done:concluir,
   view:(id,el)=>{const d=(el.dataset.c?S.cd:S.ab)[id];if(!d)return;
-    const L=[['Data',d.data&&fmt(d.data)],['Conclusão',d.dataConclusao&&fmt(d.dataConclusao)],['UF',d.uf],['Condomínio',d.condominio],['Problema',d.problema],['Responsável',d.responsavel],['Status',d.status],['Prioridade',d.prioridade==='SIM'&&'SIM'],['Técnico',d.tecnico],['Descrição',d.descricao],['Tratativa',d.tratativa],['Tratativa SAC',d.tratativaSac]].filter(x=>x[1]);
-    $('mod').innerHTML=`<div class="ov"><div class="md"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>Demanda</h2>${L.map(x=>`<div class="dr"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}</div></div>`;
+    const t0=new Date(d.data||0).getTime(),t1=d.dataConclusao?new Date(d.dataConclusao).getTime():0;
+    const tm=el.dataset.c?(t1?`<span class="tm">${dur(t1-t0)}</span>`:''):`<span class="tm" data-t="${t0}">${dur(Date.now()-t0)}</span>`;
+    const M=[['Data',d.data&&fmt(d.data)],['Conclusão',d.dataConclusao&&fmt(d.dataConclusao)],['Problema',d.problema],['Responsável',d.responsavel],['Status',d.status],['Técnico',d.tecnico]].filter(x=>x[1]);
+    const T=[['Descrição',d.descricao],['Tratativa',d.tratativa],['Tratativa SAC',d.tratativaSac]].filter(x=>x[1]);
+    $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><div class="vt"><span class="tag">${esc(d.uf)}</span>${d.prioridade==='SIM'?`<span class="pri" title="Prioridade">${ico('alert')}</span>`:''}${tm?`<span class="vtm">${el.dataset.c?'Duração ':''}${tm}</span>`:''}</div><h2 class="vh">${esc(d.condominio)}</h2>${M.length?`<div class="vg">${M.map(x=>`<div><label>${x[0]}</label><b>${esc(x[1])}</b></div>`).join('')}</div>`:''}${T.map(x=>`<div class="vs"><label>${x[0]}</label><p>${esc(x[1])}</p></div>`).join('')}</div></div>`;
     $('m-c').onclick=closeMod;log('Visualizou demanda',desc(d))},
   reopen:(id)=>{const d=S.cd[id];if(!d||!confirm('Reabrir esta demanda?'))return;const{dataConclusao,...r}=d;
     update(R(),{['demandas_concluidas/'+id]:null,['demandas_abertas/'+id]:r}).catch(fail);log('Reabriu demanda',desc(d))},
@@ -367,13 +383,14 @@ const acts={
   novou:()=>modal('Novo Usuário',[{k:'nome',n:'Nome *'},{k:'email',n:'E-mail *',t:'email'},{k:'senha',n:'Senha *',t:'password'},{k:'perfil',n:'Perfil',t:'select',o:['observador','editor','admin']}],async v=>{
     if(!v.nome||!v.email||!v.senha){toast('Preencha todos os campos.',1);return false}
     update(R('usuarios/u'+hash(v.email.toLowerCase())),{nome:v.nome.toUpperCase(),email:v.email.toLowerCase(),perfil:v.perfil,senha:await sha(v.senha)}).catch(fail);log('Cadastrou usuário',v.email+' ('+v.perfil+')')}),
-  import:()=>{const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importar(i.files[0]);i.click()},
-  export:async()=>{
-    const t=S.tab,m={abertas:x=>({DATA:fmt(x.data),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,STATUS:x.status,PRIORIDADE:x.prioridade,TRATATIVA:x.tratativa}),
+  import:()=>{closeMod();const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importar(i.files[0]);i.click()},
+  export:async(id)=>{
+    closeMod();const t=id,m={abertas:x=>({DATA:fmt(x.data),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,STATUS:x.status,PRIORIDADE:x.prioridade,TRATATIVA:x.tratativa}),
       concluidas:x=>({DATA:fmt(x.data),CONCLUSAO:fmt(x.dataConclusao),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,TRATATIVA:x.tratativa,TECNICO:x.tecnico,TRATATIVA_SAC:x.tratativaSac}),
       condominios:x=>({NOME:x.nome,UF:x.uf}),responsaveis:x=>({NOME:x.nome})}[t];if(!m)return;
     try{await xl()}catch(e){return fail(e)}
-    const l=rows(),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(l.map(m)),t.slice(0,30));
+    if(t==='concluidas'&&!S.cdDone){ensureCd();toast('Carregando histórico…');for(let i=0;i<200&&!S.cdDone;i++)await new Promise(r=>setTimeout(r,100))}
+    const l=t==='abertas'?prep(S.ab):t==='concluidas'?cdArr():arr(t==='condominios'?S.co:S.rs).sort((a,b)=>a.nome.localeCompare(b.nome)),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(l.map(m)),t.slice(0,30));
     XLSX.writeFile(wb,`${t}_${new Date().toISOString().slice(0,10)}.xlsx`);log('Exportou '+NAMES[t],l.length+' registros');
   },
   chat:()=>cw.classList.contains('on')?chatMin():chatOpen(),cmin:()=>chatMin(),cexp:()=>chatExpand(),csend:()=>chatSend(),cuser:id=>chatSelect(id)
