@@ -87,6 +87,20 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
 .vs{padding-top:14px}.vs p{white-space:pre-wrap;word-break:break-word;line-height:1.5;font-size:13px}
 .li{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 8px}
 [data-theme=light] th{background:#e2e2e7;color:#4a4a52;border-bottom-color:#cfcfd6}
+#toast{left:50%;bottom:22px;display:flex;align-items:center;gap:10px;padding:10px 16px;border-color:var(--bd);border-left:2px solid var(--pr);box-shadow:0 8px 28px #0005;transform:translate(-50%,10px);transition:opacity .2s,transform .2s;font-size:12.5px}
+#toast.on{transform:translate(-50%,0)}#toast svg{flex:none;color:var(--pr)}#toast.er{border-left-color:var(--dg)}#toast.er svg{color:var(--dg)}
+.mer{color:var(--dg);font-size:12px;margin-top:6px;line-height:1.4}.mer:empty{display:none}
+.hint{color:var(--tx2);font-size:12px;line-height:1.5;margin-bottom:12px}
+.imp{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 8px;background:transparent;border:0;border-bottom:1px solid var(--bd);color:var(--tx);cursor:pointer;transition:background .12s}.imp:hover{background:var(--hov)}.imp:last-child{border-bottom:0}.imp svg{color:var(--tx2);flex:none}.imp b{font-weight:600;display:block}.imp small{display:block;color:var(--tx2);font-size:11px;margin-top:2px}.imp .bd{margin-left:auto;white-space:nowrap}
+.st{display:flex;gap:26px;padding:14px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);flex-wrap:wrap}.st b{display:block;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}.st label{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--tx2);font-weight:600}.st .e b{color:var(--dg)}.st .n b{color:var(--pr)}
+.ct{width:100%;font-size:12px}.ct th{position:static;padding:5px 8px}.ct td{white-space:normal;max-width:none;padding:5px 8px;vertical-align:top}.ct td:first-child{font-weight:600;white-space:nowrap}
+.mt{max-height:210px;overflow:auto;border:1px solid var(--bd)}.mt td{max-width:170px;font-size:12px}
+.nt,.er{list-style:none;font-size:12px;line-height:1.6;color:var(--tx2)}.nt li:before{content:'–';margin-right:8px}.er li b{color:var(--dg);font-weight:600}
+.dz{display:block;border:1px dashed var(--bd);padding:26px 16px;text-align:center;color:var(--tx2);cursor:pointer;margin-top:16px;transition:border-color .12s,color .12s;line-height:1.6}.dz:hover,.dz.on{border-color:var(--pr);color:var(--tx)}.dz b{color:var(--tx)}
+.pbar{height:2px;background:var(--bd);margin:18px 0 8px}.pbar i{display:block;height:100%;width:0;background:var(--pr);transition:width .2s}
+.rw{display:flex;gap:12px;align-items:center}.seg{display:inline-flex;border:1px solid var(--bd)}.seg button{background:transparent;border:0;color:var(--tx2);padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600}.seg button:hover{color:var(--tx)}.seg button.on{color:var(--tx);background:var(--hov);box-shadow:inset 0 -2px var(--pr)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px}.chips button{background:transparent;border:1px solid var(--bd);color:var(--tx2);padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600}.chips button:hover{color:var(--tx);border-color:var(--sbh)}.chips button.on{border-color:var(--pr);color:var(--pr)}
+.sum{padding:12px 0;border-top:1px solid var(--bd);font-size:12.5px;line-height:1.6}.sum b{color:var(--pr)}
 </style>
 </head>
 <body>
@@ -143,7 +157,7 @@ const hash=s=>{let h=5381;for(const c of s)h=(h*33^c.charCodeAt(0))>>>0;return h
 const arr=o=>Object.entries(o||{}).map(([id,v])=>({id,...v}));
 const admin=()=>S.user?.perfil==='admin',canEdit=()=>admin()||S.user?.perfil==='editor';
 const genId=()=>'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-let tt;const toast=(m,er)=>{const t=$('toast');t.textContent=m;t.className='on'+(er?' er':'');clearTimeout(tt);tt=setTimeout(()=>t.className='',3000)};
+let tt;const toast=(m,er)=>{const me=$('m-er');if(er&&me){me.textContent=m;return}const t=$('toast');t.innerHTML=`${ico(er?'alert':'done')}<span>${esc(m)}</span>`;t.className='on'+(er?' er':'');clearTimeout(tt);tt=setTimeout(()=>t.className='',er?5000:3000)};
 const fail=e=>{console.error(e);toast(/PERMISSION/i.test(e.message)?'Firebase bloqueou a gravação: ajuste as Regras do Realtime Database.':'Erro: '+e.message,1)};
 const sha=async s=>crypto?.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join(''):'p'+hash(s);
 const log=(a,d='',who)=>push(R('logs'),{t:new Date().toISOString(),u:who||S.user?.nome||'-',uid:S.user?.id||'',a,d:String(d).slice(0,600)}).catch(()=>{});
@@ -313,10 +327,10 @@ function render(){
   const p=l.slice(S.page*PS,S.page*PS+PS);let h='';
   if(t==='abertas')h=tbl(['Data','UF','Condomínio','Descrição','Problema','Responsável','Status','Tratativa','Tempo',''],p.map(x=>{const al=alInfo(x);return `<tr data-act="view" data-id="${x.id}" ${al?'data-al="1"':''}><td>${fmt(x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td>${esc(x.status)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td><span class="tm" data-t="${new Date(x.data||0).getTime()}">${dur(Date.now()-new Date(x.data||0).getTime())}</span></td><td><span class="acts">${ed?IB('prio','alert',al?esc(al.t):'Marcar alerta',x.id,al?'data-pri="1"':'')+IB('edit','edit','Editar',x.id)+IB('done','check','Concluir',x.id)+del('demandas_abertas',x.id):''}</span></td></tr>`}).join(''));
   if(t==='concluidas')h=tbl(['Conclusão','UF','Condomínio','Descrição','Problema','Responsável','Tratativa','Técnico',''],p.map(x=>`<tr data-act="view" data-c="1" data-id="${x.id}"><td>${fmt(x.dataConclusao||x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td>${esc(x.tecnico)}</td><td><span class="acts">${ed?IB('reopen','undo','Reabrir',x.id):''}${admin()?del('demandas_concluidas',x.id):''}</span></td></tr>`).join(''));
-  if(t==='condominios')h=tbl(['Condomínio','UF',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td><span class="tag">${esc(x.uf)}</span></td><td>${ed?del('condominios',x.id):''}</td></tr>`).join(''));
-  if(t==='responsaveis')h=tbl(['Nome',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td>${ed?del('responsaveis',x.id):''}</td></tr>`).join(''));
-  if(t==='problemas')h=tbl(['Problema',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td>${ed&&x.id?del('problemas',x.id):''}</td></tr>`).join(''));
-  if(t==='usuarios')h=tbl(['Nome','E-mail','Perfil',''],p.map(x=>`<tr><td>${avT(x.id===S.user.id?S.foto:(S.fo||{})[x.id],x.nome)}${esc(x.nome)}</td><td>${esc(x.email)}</td><td>${esc(x.perfil)}</td><td>${x.id!==S.user.id?del('usuarios',x.id):''}</td></tr>`).join(''));
+  if(t==='condominios')h=tbl(['Condomínio','UF',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td><span class="tag">${esc(x.uf)}</span></td><td>${ed?`<span class="acts">${IB('editc','edit','Editar',x.id)}${del('condominios',x.id)}</span>`:''}</td></tr>`).join(''));
+  if(t==='responsaveis')h=tbl(['Nome',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td>${ed?`<span class="acts">${IB('editr','edit','Editar',x.id)}${del('responsaveis',x.id)}</span>`:''}</td></tr>`).join(''));
+  if(t==='problemas')h=tbl(['Problema',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td>${ed&&x.id?`<span class="acts">${IB('editp','edit','Editar',x.id)}${del('problemas',x.id)}</span>`:''}</td></tr>`).join(''));
+  if(t==='usuarios')h=tbl(['Nome','E-mail','Perfil',''],p.map(x=>`<tr><td>${avT(x.id===S.user.id?S.foto:(S.fo||{})[x.id],x.nome)}${esc(x.nome)}</td><td>${esc(x.email)}</td><td>${esc(x.perfil)}</td><td><span class="acts">${IB('editu','edit','Editar',x.id)}${x.id!==S.user.id?del('usuarios',x.id):''}</span></td></tr>`).join(''));
   if(t==='logs')h=tbl(['Data','Usuário','Ação','Detalhe'],p.map(x=>`<tr><td style="white-space:nowrap">${new Date(x.t).toLocaleString('pt-BR')}</td><td>${esc(x.u)}</td><td>${esc(x.a)}</td><td>${esc(x.d)}</td></tr>`).join(''));
   const pages=Math.ceil(l.length/PS);
   {const o=h+`<div class="pg">${pages>1?`${IB('pg','prev','Anterior','-1')}${S.page+1}/${pages}${IB('pg','next','Próxima','1')}`:''}<span>${l.length} registro(s)</span>${t==='logs'&&!S.lgEnd?`<button class="btn s" data-act="lgmore">${S.lgBusy?'Carregando…':'Carregar mais antigos'}</button>`:''}</div>`;if(o!==S._lh){S._lh=o;$('list').innerHTML=o}}
@@ -328,6 +342,10 @@ const askYes=(t,msg,lb)=>new Promise(res=>{const o=document.createElement('div')
   o.innerHTML=`<div class="md" style="max-width:360px"><button class="m-x" title="Fechar">&times;</button><h2>${t}</h2><p style="line-height:1.5;margin-bottom:14px">${msg}</p><div class="ac"><button class="btn p">${lb}</button></div></div>`;
   const done=v=>{o.remove();res(v)};o.querySelector('.m-x').onclick=()=>done(false);o.querySelector('.btn').onclick=()=>done(true);
   o.addEventListener('mousedown',e=>{if(e.target===o)done(false)});document.body.appendChild(o);o.querySelector('.btn').focus()});
+const askUF=()=>new Promise(res=>{const o=document.createElement('div');o.className='ov';o.style.zIndex=1000;
+  o.innerHTML=`<div class="md" style="max-width:340px"><button class="m-x" title="Fechar">&times;</button><h2>Nova UF</h2><div class="fg"><label>Sigla com 2 letras (ex.: BA)</label><input maxlength="2" style="text-transform:uppercase"></div><div class="ac"><button class="btn p">Adicionar</button></div></div>`;
+  const i=o.querySelector('input'),done=v=>{o.remove();res(v)};o.querySelector('.m-x').onclick=()=>done(null);o.querySelector('.btn').onclick=()=>done(i.value);i.onkeydown=e=>{if(e.key==='Enter')done(i.value)};
+  o.addEventListener('mousedown',e=>{if(e.target===o)done(null)});document.body.appendChild(o);i.focus()});
 const PQ=['Remover alerta','Este atendimento está em <b>alerta manual</b>. Deseja realmente remover o alerta?','Remover'];
 function alertaModal(d){
   modal('Alerta manual',[{k:'motivo',n:`${esc(d.condominio)} — ${esc(d.descricao)}<br><br>Motivo do alerta *`,t:'area',v:''}],v=>{
@@ -351,15 +369,15 @@ function modal(title,fields,ok,label='Salvar'){
       :x.t==='area'?`<textarea id="f_${x.k}" rows="3">${v}</textarea>`
       :`<input id="f_${x.k}" type="${x.t||'text'}" value="${v}" ${x.l?`list="dl_${x.k}"`:''}>${x.l?`<datalist id="dl_${x.k}">${x.l.map(o=>`<option value="${esc(o)}">`).join('')}</datalist>`:''}`;
     return `<div class="fg"><label>${x.n}</label>${i}</div>`};
-  $('mod').innerHTML=`<div class="ov"><div class="md"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>${title}</h2>${fields.map(f).join('')}<div class="ac"><button class="btn p" id="m-ok" title="${label}">${label==='Salvar'?ico('save'):label}</button></div></div></div>`;
+  $('mod').innerHTML=`<div class="ov"><div class="md"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>${title}</h2>${fields.map(f).join('')}<p id="m-er" class="mer"></p><div class="ac"><button class="btn p" id="m-ok" title="${label}">${label==='Salvar'?ico('save'):label}</button></div></div></div>`;
   const fc=$('f_condominio'),fu=$('f_uf');if(fc&&fu&&fu.tagName==='SELECT'){const syn=()=>{const v=fc.value.trim().toUpperCase(),h=arr(S.co).filter(c=>c.nome===v);
     if(h.length&&!h.some(c=>c.uf===fu.value)){const u=h[0].uf;if(![...fu.options].some(o=>o.value===u))fu.insertBefore(new Option(u,u),fu.options[fu.options.length-1]);fu.value=u}};
     fc.addEventListener('input',syn);fc.addEventListener('change',syn)}
   document.querySelectorAll('#mod select[data-prob]').forEach(sel=>sel.onchange=()=>{if(sel.value!=='__new')return;
     const i=document.createElement('input');i.id=sel.id;i.placeholder='Digite o novo problema';i.style.textTransform='uppercase';sel.replaceWith(i);i.focus()});
-  document.querySelectorAll('#mod select[data-uf]').forEach(sel=>{let prev=sel.value;sel.onchange=()=>{
+  document.querySelectorAll('#mod select[data-uf]').forEach(sel=>{let prev=sel.value;sel.onchange=async()=>{
     if(sel.value!=='__new'){prev=sel.value;return}
-    const n=(prompt('Sigla da nova UF (2 letras):')||'').trim().toUpperCase();
+    const n=((await askUF())||'').trim().toUpperCase();
     if(!/^[A-Z]{2}$/.test(n)){sel.value=prev;return}
     update(R('ufs'),{[n]:true}).catch(fail);log('Cadastrou UF',n);
     if(![...sel.options].some(o=>o.value===n))sel.insertBefore(new Option(n,n),sel.options[sel.options.length-1]);
@@ -413,14 +431,6 @@ const acts={
     if(d.prioridade!=='SIM')return alertaModal({id,...d});
     if(!await askYes(...PQ))return;
     update(R('demandas_abertas/'+id),{prioridade:'',alertaMotivo:'',alertaPor:'',alertaEm:''}).catch(fail);log('Removeu alerta',desc(d)+(d.alertaMotivo?' | motivo era: '+d.alertaMotivo:''))},
-  cfgal:()=>{if(!admin())return;const c=S.cfg?.alerta||{};
-    modal('Configurar alerta automático',[{k:'valor',n:'Entrar em alerta após (0 = desativado)',t:'number',v:c.valor??''},{k:'unidade',n:'Unidade',t:'select',o:['minutos','horas','dias'],v:c.unidade||'horas'}],v=>{
-      const n=Math.floor(+v.valor);if(!(n>=0)){toast('Informe um número válido.',1);return false}
-      update(R('config/alerta'),{valor:n,unidade:v.unidade}).catch(fail);
-      log('Configurou alerta',n?`${n} ${v.unidade}`:'desativado');toast(n?'Alerta automático após '+n+' '+v.unidade:'Alerta automático desativado');
-    })},
-  trocas:()=>{const E=[['abertas','Demandas abertas'],['concluidas','Demandas concluídas'],['condominios','Condomínios'],['responsaveis','Responsáveis']];
-    $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>Importar / Exportar</h2><div class="vs" style="padding-top:0"><label>Exportar para Excel</label>${E.map(([k,n])=>`<button class="btn li" data-act="export" data-id="${k}">${ico('up')}${n}</button>`).join('')}</div>${canEdit()?`<div class="vs"><label>Importar</label><button class="btn li" data-act="importc">${ico('down')}Condomínios (planilha: CONDOMINIO e UF, uma aba por UF)</button><button class="btn li" data-act="import">${ico('down')}Planilha de demandas (abas CENTRAL / CONCLUIDO)</button></div>`:''}</div></div>`;$('m-c').onclick=closeMod},
   lgmore:()=>loadOlder(),
   foto:()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>i.files[0]&&fotoSet(i.files[0]);i.click()},
   fotox:()=>{S.foto='';setUserUI();update(R('fotos'),{[S.user.id]:null}).catch(fail);log('Removeu foto')},
@@ -436,7 +446,7 @@ const acts={
     const T=[['Descrição',d.descricao],['Tratativa',d.tratativa],['Tratativa SAC',d.tratativaSac]].filter(x=>x[1]);
     $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><div class="vt"><span class="tag">${esc(d.uf)}</span>${al?`<span class="pri" title="${esc(al.t)}">${ico('alert')}</span>`:''}${tm?`<span class="vtm">${el.dataset.c?'Duração ':''}${tm}</span>`:''}</div><h2 class="vh">${esc(d.condominio)}</h2>${M.length?`<div class="vg">${M.map(x=>`<div><label>${x[0]}</label><b>${esc(x[1])}</b></div>`).join('')}</div>`:''}${T.map(x=>`<div class="vs"><label>${x[0]}</label><p>${esc(x[1])}</p></div>`).join('')}</div></div>`;
     $('m-c').onclick=closeMod;log('Visualizou demanda',desc(d))},
-  reopen:(id)=>{const d=S.cd[id];if(!d||!confirm('Reabrir esta demanda?'))return;const{dataConclusao,...r}=d;
+  reopen:async(id)=>{const d=S.cd[id];if(!d||!await askYes('Reabrir demanda','A demanda volta para a lista de abertas.','Reabrir'))return;const{dataConclusao,...r}=d;
     update(R(),{['demandas_concluidas/'+id]:null,['demandas_abertas/'+id]:r}).catch(fail);log('Reabriu demanda',desc(d))},
   del:async(id,el)=>{const k=el.dataset.k;if(!await askAdmin())return;const o=S[COL[k]][id];
     update(R(),{[k+'/'+id]:null}).catch(fail);log('Excluiu '+k.replace('_',' '),desc(o)+(o?.tratativa?' | tratativa: '+o.tratativa:''))},
@@ -448,8 +458,6 @@ const acts={
     if(!v.nome||!v.email||!v.senha){toast('Preencha todos os campos.',1);return false}
     v.email=mail(v.email);if(!okMail(v.email)){toast('O e-mail deve ser @servis.com.',1);return false}
     update(R('usuarios/u'+hash(v.email.toLowerCase())),{nome:v.nome.toUpperCase(),email:v.email.toLowerCase(),perfil:v.perfil,senha:await sha(v.senha)}).catch(fail);log('Cadastrou usuário',v.email+' ('+v.perfil+')')}),
-  import:()=>{closeMod();const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importar(i.files[0]);i.click()},
-  importc:()=>{closeMod();const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importarCond(i.files[0]);i.click()},
   export:async(id)=>{
     closeMod();const t=id,m={abertas:x=>({DATA:fmt(x.data),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,STATUS:x.status,ALERTA:x.prioridade==='SIM'?'SIM':'',MOTIVO_ALERTA:x.alertaMotivo,TRATATIVA:x.tratativa}),
       concluidas:x=>({DATA:fmt(x.data),CONCLUSAO:fmt(x.dataConclusao),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,TRATATIVA:x.tratativa,TECNICO:x.tecnico,TRATATIVA_SAC:x.tratativaSac}),
@@ -467,45 +475,179 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');if(a)acts[a.dataset.act]?.(a.dataset.id,a)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMod()});
 
-/* ---------- Importar Excel (direto para o histórico) ---------- */
+/* ---------- Importação (modelos, validação e pré-visualização) ---------- */
 const txt=v=>v==null?'':String(v).replace(/\s+/g,' ').trim();
 const toISO=v=>{if(v instanceof Date&&!isNaN(v))return new Date(v.getTime()-v.getTimezoneOffset()*6e4).toISOString();const d=new Date(v);return v&&!isNaN(d)?d.toISOString():''};
-async function importarCond(f){
-  try{toast('Lendo planilha…');await xl();
-    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',sheetRows:5000});
-    const m=new Map();let bad=0;
-    wb.SheetNames.forEach(sn=>{const sf=sn.trim().toUpperCase().slice(0,2);
-      XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:null}).forEach((r,i)=>{
-        const n=txt(r[0]).toUpperCase().replace(/\s+/g,' ').trim();let u=txt(r[1]).toUpperCase().trim();
-        if(!n)return;if(i===0&&/^(COND\S*|NOME.*)$/.test(n))return;
-        if(!/^[A-Z]{2}$/.test(u))u=/^[A-Z]{2}$/.test(sf)?sf:'';
-        if(!u){bad++;return}m.set(n+'|'+u,{nome:n,uf:u})})});
-    if(!m.size)return toast('Nenhum condomínio válido. Use coluna A = nome e coluna B = UF (2 letras).',1);
-    const novos=[...m.values()].filter(c=>!S.co['c'+hash(c.nome+c.uf)]).length;
-    if(!await askYes('Importar condomínios',`${m.size} condomínio(s) na planilha, sendo <b>${novos}</b> novo(s).${bad?`<br>${bad} linha(s) sem UF válida serão ignoradas.`:''}`,'Importar'))return;
-    const up={};m.forEach(c=>{up['condominios/c'+hash(c.nome+c.uf)]=c;up['ufs/'+c.uf]=true});
-    const keys=Object.keys(up);for(let i=0;i<keys.length;i+=500){const c={};keys.slice(i,i+500).forEach(k=>c[k]=up[k]);await update(R(),c)}
-    log('Importou condomínios',`${m.size} registros (${f.name})`);toast(`${novos} condomínio(s) novo(s) importado(s).`);
-  }catch(err){fail(err)}
-}
-async function importar(f){
-  try{
-    toast('Lendo planilha… (arquivos grandes podem levar alguns segundos)');await xl();await new Promise(r=>setTimeout(r,50));
-    const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,sheets:['CENTRAL','CONCLUIDO'],sheetRows:60000});
-    const pick=(sh,pre)=>{const out={};XLSX.utils.sheet_to_json(wb.Sheets[sh]||{},{header:1,raw:true,defval:null}).forEach(r=>{
-      const cond=txt(r[1]).toUpperCase();if(!cond||/^COND(OM[IÍ]NIO)?$/.test(cond))return;
-      let uf=txt(r[0]).toUpperCase();if(!/^[A-Z]{2}$/.test(uf))uf='';
-      const data=toISO(r[6]),desc=txt(r[2]).toUpperCase();
-      out[pre+hash(cond+'|'+desc+'|'+data)]=clean({uf,condominio:cond,descricao:desc,problema:txt(r[3]).toUpperCase(),responsavel:txt(r[4]).toUpperCase().replace('NONE',''),status:txt(r[5]).toUpperCase().replace('CONCLUIDO','')||'CENTRAL',data,dataConclusao:data,tratativa:txt(r[7]).toUpperCase(),tecnico:txt(r[8]).toUpperCase(),tratativaSac:txt(r[9]).toUpperCase()})});return out};
-    const old=pick('CENTRAL','a'),cd={...pick('CENTRAL','c'),...pick('CONCLUIDO','c')},nc=Object.keys(cd).length;
-    if(!nc)return toast('Não encontrei abas CENTRAL/CONCLUIDO com dados.',1);
-    if(!confirm(`Importar ${nc} registro(s) direto para o histórico (Concluídas)?\n(Reimportar o mesmo arquivo não duplica registros.)`))return;
-    const up={};Object.entries(cd).forEach(([k,v])=>up['demandas_concluidas/'+k]=v);Object.keys(old).forEach(k=>{if(S.ab[k])up['demandas_abertas/'+k]=null});
-    Object.values(cd).forEach(v=>{if(v.uf){up['ufs/'+v.uf]=true;up['condominios/c'+hash(v.condominio+v.uf)]={nome:v.condominio,uf:v.uf}}if(v.responsavel)up['responsaveis/r'+hash(v.responsavel)]={nome:v.responsavel}});
-    const keys=Object.keys(up);for(let i=0;i<keys.length;i+=500){const c={};keys.slice(i,i+500).forEach(k=>c[k]=up[k]);await update(R(),c);toast(`Enviando… ${Math.min(i+500,keys.length)}/${keys.length}`)}
-    log('Importou planilha',`${nc} registros para o histórico (${f.name})`);toast(`Importação concluída: ${nc} registros no histórico.`);
-  }catch(err){fail(err)}
-}
+const nrm=v=>txt(v).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]/g,'');
+const isUF=u=>/^[A-Z]{2}$/.test(u);
+const pdt=v=>{if(v instanceof Date)return isNaN(v)?'':toISO(v);const s=txt(v);if(!s)return '';
+  const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ ,T]+(\d{1,2})[:h](\d{2}))?/);
+  if(m){let y=+m[3];if(y<100)y+=2000;const d=new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));return isNaN(d)?'':d.toISOString()}
+  const d=new Date(s);return isNaN(d)?'':d.toISOString()};
+let _pn,_cu,_ek;
+const prepCtx=()=>{_pn=new Set(probNames());_cu=new Map();arr(S.co).forEach(c=>{if(!_cu.has(c.nome))_cu.set(c.nome,[]);_cu.get(c.nome).push(c.uf)});
+  const k=d=>d.condominio+'|'+d.descricao+'|'+String(d.data||'').slice(0,16);_ek={ab:new Set(arr(S.ab).map(k)),cd:S.cdDone?new Set(arr(S.cd).map(k)):null}};
+const extras=v=>{const up={};if(v.uf){up['ufs/'+v.uf]=true;const ck='c'+hash(v.condominio+v.uf);if(!S.co[ck])up['condominios/'+ck]={nome:v.condominio,uf:v.uf}}
+  if(v.responsavel&&!S.rs['r'+hash(v.responsavel)])up['responsaveis/r'+hash(v.responsavel)]={nome:v.responsavel};
+  if(v.problema&&!_pn.has(v.problema))up['problemas/p'+hash(v.problema)]={nome:v.problema};return up};
+const dem=(o,h)=>{
+  const cond=txt(o.condominio).toUpperCase(),dsc=txt(o.descricao).toUpperCase();let uf=txt(o.uf).toUpperCase();
+  if(!cond)return{e:'Condomínio vazio'};if(!dsc)return{e:'Descrição vazia'};
+  if(!isUF(uf)){const c=_cu.get(cond)||[];uf=c.length===1?c[0]:''}
+  if(!uf)return{e:'UF inválida ou ausente (e o condomínio não está cadastrado)'};
+  const dt=pdt(o.data);if(!dt&&txt(o.data))return{e:'Data inválida (use dd/mm/aaaa hh:mm)'};const data=dt||new Date().toISOString();
+  const v={uf,condominio:cond,descricao:dsc,problema:txt(o.problema).toUpperCase(),responsavel:txt(o.responsavel).toUpperCase(),data,tratativa:txt(o.tratativa).toUpperCase()},ek=cond+'|'+dsc+'|'+data.slice(0,16),hs=hash(cond+'|'+dsc+'|'+data);
+  if(h){const dc=pdt(o.conclusao);if(!dc&&txt(o.conclusao))return{e:'Data de conclusão inválida'};
+    Object.assign(v,{status:'',dataConclusao:dc||data,tecnico:txt(o.tecnico).toUpperCase(),tratativaSac:txt(o.tratativaSac).toUpperCase()});
+    return{k:'demandas_concluidas/c'+hs,v:clean(v),up:extras(v),ek,lb:[fmt(dc||data),uf,cond,dsc,v.responsavel]}}
+  const st=txt(o.status).toUpperCase();if(st&&!STATUS.includes(st))return{e:'Status "'+st+'" inválido (use '+STATUS.join(', ')+')'};
+  const al=/^(SIM|S|1|X)$/i.test(txt(o.alerta)),mo=txt(o.alertaMotivo);if(al&&!mo)return{e:'ALERTA = SIM exige MOTIVO_ALERTA'};
+  Object.assign(v,{status:st||'CENTRAL',prioridade:al?'SIM':'',alertaMotivo:al?mo:'',alertaPor:al?S.user.nome||'':'',alertaEm:al?new Date().toISOString():''});
+  return{k:'demandas_abertas/a'+hs,v:clean(v),up:extras(v),ek,lb:[fmt(data),uf,cond,dsc,v.responsavel]}};
+const DH=['Data','UF','Condomínio','Descrição','Responsável'];
+const IMP={
+ condominios:{nome:'Condomínios',d:'Cadastro de condomínios e suas UFs.',h:['Nome','UF'],
+  c:[['nome','NOME',1,'Nome do condomínio','RESIDENCIAL EXEMPLO','NOME|CONDOMINIO'],['uf','UF',2,'Sigla do estado com 2 letras','CE','UF|ESTADO']],
+  ex:[['RESIDENCIAL EXEMPLO','CE'],['EDIFÍCIO MODELO','PI']],
+  nt:['* A UF pode vir da coluna ou do nome da aba (uma aba por UF, ex.: aba "CE").','Condomínios já cadastrados (mesmo nome e UF) são ignorados.','Nomes são gravados em maiúsculas.'],
+  row:(o,sn)=>{const nome=txt(o.nome).toUpperCase();let uf=txt(o.uf).toUpperCase();if(!nome)return{e:'Nome vazio'};
+    if(!isUF(uf))uf=/^[A-Za-z]{2}$/.test(sn.trim())?sn.trim().toUpperCase():'';if(!uf)return{e:'UF inválida ou ausente'};
+    return{k:'condominios/c'+hash(nome+uf),v:{nome,uf},up:{['ufs/'+uf]:true},lb:[nome,uf]}}},
+ responsaveis:{nome:'Responsáveis',d:'Lista de pessoas responsáveis pelas demandas.',h:['Nome'],
+  c:[['nome','NOME',1,'Nome do responsável','MARIA SILVA','NOME|RESPONSAVEL']],ex:[['MARIA SILVA'],['JOÃO SOUZA']],
+  nt:['Uma linha por responsável.','Nomes já cadastrados são ignorados.'],
+  row:o=>{const nome=txt(o.nome).toUpperCase();return nome?{k:'responsaveis/r'+hash(nome),v:{nome},lb:[nome]}:{e:'Nome vazio'}}},
+ problemas:{nome:'Problemas',d:'Tipos de problema usados na classificação das demandas.',h:['Problema'],
+  c:[['nome','NOME',1,'Nome do problema','INTERFONE','NOME|PROBLEMA']],ex:[['INTERFONE'],['PORTÃO']],
+  nt:['Os problemas padrão do sistema já existem e são ignorados.'],
+  row:o=>{const nome=txt(o.nome).toUpperCase();if(!nome)return{e:'Nome vazio'};if(PROBS.includes(nome))return{k:'problemas/p'+hash(nome),v:{nome},lb:[nome]};return{k:'problemas/p'+hash(nome),v:{nome},lb:[nome]}}},
+ abertas:{nome:'Demandas abertas',d:'Demandas em tratamento. Segue o mesmo formato da exportação.',h:DH,
+  c:[['data','DATA',0,'dd/mm/aaaa hh:mm. Vazia = agora','22/10/2026 14:30','DATA|DATAABERTURA|ABERTURA'],['uf','UF',2,'Sigla com 2 letras','CE','UF|ESTADO'],['condominio','CONDOMINIO',1,'Nome do condomínio','RESIDENCIAL EXEMPLO','CONDOMINIO'],['descricao','DESCRICAO',1,'Reclamação / descrição','INTERFONE SEM ÁUDIO NO BLOCO B','DESCRICAO|RECLAMACAO'],['problema','PROBLEMA',0,'Tipo do problema','INTERFONE','PROBLEMA'],['responsavel','RESPONSAVEL',0,'Responsável','MARIA SILVA','RESPONSAVEL'],['status','STATUS',0,'CENTRAL, SITUATOR ou GEAR (padrão CENTRAL)','CENTRAL','STATUS'],['alerta','ALERTA',0,'SIM para alerta manual','SIM','ALERTA|PRIORIDADE'],['alertaMotivo','MOTIVO_ALERTA',0,'Obrigatório quando ALERTA = SIM','CLIENTE AMEAÇA CANCELAR','MOTIVOALERTA'],['tratativa','TRATATIVA',0,'Observação / tratativa','AGUARDANDO TÉCNICO','TRATATIVA|OBSERVACAO']],
+  ex:[['22/10/2026 14:30','CE','RESIDENCIAL EXEMPLO','INTERFONE SEM ÁUDIO NO BLOCO B','INTERFONE','MARIA SILVA','CENTRAL','','','AGUARDANDO TÉCNICO'],['21/10/2026 09:10','PI','EDIFÍCIO MODELO','PORTÃO NÃO ABRE PELO APP','APP','JOÃO SOUZA','SITUATOR','SIM','CLIENTE AMEAÇA CANCELAR','']],
+  nt:['* A UF pode ficar vazia se o condomínio já estiver cadastrado.','Condomínios, UFs, responsáveis e problemas novos são cadastrados automaticamente.','Demandas já existentes (mesmo condomínio, descrição e horário) são ignoradas, então reimportar não duplica.'],
+  row:o=>dem(o,0)},
+ historico:{nome:'Histórico (concluídas)',d:'Demandas já concluídas. Segue o mesmo formato da exportação.',h:DH,hist:1,
+  c:[['data','DATA',0,'Abertura, dd/mm/aaaa hh:mm','20/10/2026 10:00','DATA|DATAABERTURA|ABERTURA'],['conclusao','CONCLUSAO',0,'Conclusão (vazia = igual à abertura)','21/10/2026 16:45','CONCLUSAO|DATACONCLUSAO'],['uf','UF',2,'Sigla com 2 letras','CE','UF|ESTADO'],['condominio','CONDOMINIO',1,'Nome do condomínio','RESIDENCIAL EXEMPLO','CONDOMINIO'],['descricao','DESCRICAO',1,'Reclamação / descrição','CÂMERA 3 OFFLINE','DESCRICAO|RECLAMACAO'],['problema','PROBLEMA',0,'Tipo do problema','CÂMERAS','PROBLEMA'],['responsavel','RESPONSAVEL',0,'Responsável','MARIA SILVA','RESPONSAVEL'],['tratativa','TRATATIVA',0,'Solução aplicada','TROCADA FONTE DA CÂMERA','TRATATIVA'],['tecnico','TECNICO',0,'Técnico','CARLOS','TECNICO'],['tratativaSac','TRATATIVA_SAC',0,'Retorno do SAC','CLIENTE INFORMADO','TRATATIVASAC|SAC']],
+  ex:[['20/10/2026 10:00','21/10/2026 16:45','CE','RESIDENCIAL EXEMPLO','CÂMERA 3 OFFLINE','CÂMERAS','MARIA SILVA','TROCADA FONTE DA CÂMERA','CARLOS','CLIENTE INFORMADO']],
+  nt:['Registros que já estão no histórico (mesmo condomínio, descrição e horário) são ignorados.','Condomínios, UFs, responsáveis e problemas novos são cadastrados automaticamente.','Arquivos grandes (milhares de linhas) podem levar alguns segundos.'],
+  row:o=>dem(o,1)},
+ legado:{nome:'Planilha antiga (CENTRAL / CONCLUIDO)',d:'Formato da planilha original do setor. Vai direto para o histórico.',h:DH,hist:1,sheets:['CENTRAL','CONCLUIDO'],
+  c:[['uf','UF',0,'Sigla do estado','CE',''],['condominio','CONDOMINIO',1,'Nome do condomínio','RESIDENCIAL EXEMPLO',''],['descricao','DESCRICAO',1,'Reclamação','INTERFONE SEM ÁUDIO',''],['problema','PROBLEMA',0,'Tipo do problema','INTERFONE',''],['responsavel','RESPONSAVEL',0,'Responsável','MARIA SILVA',''],['status','STATUS',0,'Status','CENTRAL',''],['data','DATA',0,'Data do atendimento','22/10/2026 14:30',''],['tratativa','TRATATIVA',0,'Solução aplicada','TROCADO O MÓDULO',''],['tecnico','TECNICO',0,'Técnico','CARLOS',''],['tratativaSac','TRATATIVA_SAC',0,'Retorno do SAC','CLIENTE INFORMADO','']],
+  ex:[['CE','RESIDENCIAL EXEMPLO','INTERFONE SEM ÁUDIO','INTERFONE','MARIA SILVA','CENTRAL','22/10/2026 14:30','TROCADO O MÓDULO','CARLOS','CLIENTE INFORMADO']],
+  nt:['Lê apenas as abas CENTRAL e CONCLUIDO, com as colunas nesta ordem.','A primeira linha pode ser o cabeçalho.','Itens da aba CENTRAL também saem da lista de abertas, se estiverem lá.'],
+  row:(o,sn)=>{const cond=txt(o.condominio).toUpperCase();if(!cond||/^COND(OM[IÍ]NIO)?$/.test(cond))return{skip:1};
+    let uf=txt(o.uf).toUpperCase();if(!isUF(uf))uf='';const data=pdt(o.data),dsc=txt(o.descricao).toUpperCase();
+    const v=clean({uf,condominio:cond,descricao:dsc,problema:txt(o.problema).toUpperCase(),responsavel:txt(o.responsavel).toUpperCase().replace('NONE',''),status:txt(o.status).toUpperCase().replace('CONCLUIDO','')||'CENTRAL',data,dataConclusao:data,tratativa:txt(o.tratativa).toUpperCase(),tecnico:txt(o.tecnico).toUpperCase(),tratativaSac:txt(o.tratativaSac).toUpperCase()});
+    const hs=hash(cond+'|'+dsc+'|'+data),up=extras(v);if(sn==='CENTRAL'&&S.ab['a'+hs])up['demandas_abertas/a'+hs]=null;
+    return{k:'demandas_concluidas/c'+hs,v,up,ek:cond+'|'+dsc+'|'+data.slice(0,16),lb:[fmt(data),uf,cond,dsc,v.responsavel]}}}
+};
+const cdReady=async()=>{ensureCd();for(let i=0;i<150&&!S.cdDone;i++)await new Promise(r=>setTimeout(r,100))};
+const ex=x=>{const[c,...i]=x.k.split('/'),id=i.join('/'),col=S[COL[c]];if(col&&!(c==='demandas_concluidas'&&!S.cdDone)&&col[id])return 1;
+  const st=x.ek&&(c==='demandas_abertas'?_ek.ab:_ek.cd);return !!(st&&st.has(x.ek))};
+async function modelo(id){const T=IMP[id];await xl();const wb=XLSX.utils.book_new();
+  (T.sheets||[id.toUpperCase()]).forEach(n=>{const ws=XLSX.utils.aoa_to_sheet([T.c.map(c=>c[1]),...T.ex]);ws['!cols']=T.c.map((c,j)=>({wch:Math.max(c[1].length+4,14,...T.ex.map(r=>txt(r[j]).length+2))}));XLSX.utils.book_append_sheet(wb,ws,n)});
+  const w2=XLSX.utils.aoa_to_sheet([['COLUNA','OBRIGATÓRIA','DESCRIÇÃO','EXEMPLO'],...T.c.map(c=>[c[1],c[2]===1?'SIM':c[2]===2?'SIM*':'NÃO',c[3],c[4]]),[],['REGRAS'],...T.nt.map(n=>[n])]);
+  w2['!cols']=[{wch:20},{wch:14},{wch:58},{wch:30}];XLSX.utils.book_append_sheet(wb,w2,'INSTRUCOES');
+  XLSX.writeFile(wb,'modelo_'+id+'.xlsx');log('Exportou modelo de importação',T.nome)}
+async function lerPlanilha(f,T){
+  const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true,sheetRows:60000,...(T.sheets?{sheets:T.sheets}:{})});
+  const out=[],err=[];let total=0;const names=T.sheets||wb.SheetNames.filter(n=>!/^(INSTRUCOES|LEIAME)$/.test(nrm(n)));
+  for(const sn of names){const ws=wb.Sheets[sn];if(!ws)continue;
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});let map,start=0;
+    if(T.sheets)map=Object.fromEntries(T.c.map((c,j)=>[c[0],j]));
+    else{for(let i=0;i<Math.min(rows.length,6)&&!map;i++){const hs=(rows[i]||[]).map(nrm),m={};
+        T.c.forEach(([k,,,,,a])=>{const re=new RegExp('^('+a+')$'),j=hs.findIndex(h=>re.test(h));if(j>=0)m[k]=j});
+        if(Object.keys(m).length>=Math.min(2,T.c.length)){map=m;start=i+1}}
+      if(!map)map=Object.fromEntries(T.c.map((c,j)=>[c[0],j]));
+      const falta=T.c.filter(c=>c[2]===1&&map[c[0]]==null).map(c=>c[1]);
+      if(falta.length){err.push({l:1,s:sn,m:'Coluna(s) não encontrada(s): '+falta.join(', ')});continue}}
+    for(let i=start;i<rows.length;i++){const r=rows[i]||[];if(!r.some(c=>c!=null&&txt(c)!==''))continue;
+      const o={};for(const k in map)o[k]=r[map[k]];const x=T.row(o,sn);if(x.skip)continue;total++;
+      if(x.e)err.push({l:i+1,s:sn,m:x.e});else out.push(x)}}
+  return{out,err,total,multi:names.length>1}}
+async function analisar(id,f){const T=IMP[id];
+  $('mod').innerHTML=`<div class="ov"><div class="md vw"><h2 class="vh">Lendo ${esc(f.name)}…</h2><p class="hint">Validando as linhas da planilha.</p><div class="pbar"><i style="width:45%"></i></div></div></div>`;
+  try{await xl();await new Promise(r=>setTimeout(r,30));if(T.hist)await cdReady();prepCtx();
+    const res=await lerPlanilha(f,T);if(!res.total&&!res.err.length)throw new Error('Nenhuma linha com dados foi encontrada na planilha.');
+    prever(id,f,res)}catch(e){fail(e);acts.impt(id)}}
+function prever(id,f,res){const T=IMP[id],M=new Map();let dup=0;res.out.forEach(x=>{if(M.has(x.k))dup++;M.set(x.k,x)});
+  const L=[...M.values()],N=L.filter(x=>!ex(x)),up={},xu={};
+  N.forEach(x=>{up[x.k]=x.v;Object.assign(xu,x.up)});Object.assign(up,xu);
+  const cn=p=>Object.keys(xu).filter(k=>k.startsWith(p)&&xu[k]!==null).length,pv=(N.length?N:L).slice(0,6);
+  const ext=id==='condominios'||id==='responsaveis'||id==='problemas'?'':[[cn('condominios/'),'condomínio(s)'],[cn('responsaveis/'),'responsável(is)'],[cn('problemas/'),'problema(s)']].filter(a=>a[0]).map(a=>a[0]+' '+a[1]).join(', ');
+  const nE=res.err.length;
+  $('mod').innerHTML=`<div class="ov"><div class="md vw" style="max-width:680px"><button class="m-x" id="m-c" title="Fechar">&times;</button><div class="vt"><span class="tag">Importar</span></div><h2 class="vh" style="margin-bottom:4px">${T.nome}</h2><p class="hint">${esc(f.name)}</p>
+  <div class="st"><div><b>${res.total}</b><label>Linhas lidas</label></div><div class="n"><b>${N.length}</b><label>Novos</label></div><div><b>${L.length-N.length}</b><label>Já existem</label></div><div class="${nE?'e':''}"><b>${nE}</b><label>Com erro</label></div></div>
+  ${ext||dup?`<p class="hint" style="margin:12px 0 0">${ext?'Também serão cadastrados: '+ext+'. ':''}${dup?dup+' linha(s) repetida(s) na planilha (vale a última).':''}</p>`:''}
+  ${pv.length?`<div class="vs"><label>Pré-visualização</label><div class="mt"><table class="ct"><thead><tr>${T.h.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${pv.map(x=>`<tr>${x.lb.map(c=>`<td title="${esc(c)}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`:''}
+  ${nE?`<div class="vs"><label>Linhas ignoradas</label><ul class="er">${res.err.slice(0,8).map(e=>`<li><b>Linha ${e.l}</b>${res.multi?' · aba '+esc(e.s):''} — ${esc(e.m)}</li>`).join('')}${nE>8?`<li>+ ${nE-8} outra(s)</li>`:''}</ul></div>`:''}
+  <div class="ac" id="i-ft"><button class="btn" id="i-b">Voltar</button><button class="btn p" id="i-go" ${N.length?'':'disabled'}>${N.length?'Importar '+N.length+' registro(s)':'Nada novo para importar'}</button></div></div></div>`;
+  $('m-c').onclick=closeMod;$('i-b').onclick=()=>acts.impt(id);
+  $('i-go').onclick=async()=>{const keys=Object.keys(up);
+    $('i-ft').innerHTML=`<div class="pbar" style="flex:1;margin:0 12px 0 0"><i id="i-pb"></i></div><span class="hint" id="i-pt" style="margin:0">0%</span>`;
+    try{for(let i=0;i<keys.length;i+=500){const c={};keys.slice(i,i+500).forEach(k=>c[k]=up[k]);await update(R(),c);const q=Math.round(Math.min(i+500,keys.length)/keys.length*100);$('i-pb').style.width=q+'%';$('i-pt').textContent=q+'%'}}
+    catch(e){fail(e);return prever(id,f,res)}
+    log('Importou '+T.nome.toLowerCase(),`${N.length} registros (${f.name})`);toast(N.length+' registro(s) importado(s)');
+    $('mod').innerHTML=`<div class="ov"><div class="md vw" style="max-width:480px"><h2 class="vh">Importação concluída</h2><div class="st"><div class="n"><b>${N.length}</b><label>Importados</label></div><div><b>${L.length-N.length}</b><label>Ignorados (já existiam)</label></div><div class="${nE?'e':''}"><b>${nE}</b><label>Com erro</label></div></div><div class="ac"><button class="btn p" id="i-ok">Fechar</button></div></div></div>`;$('i-ok').onclick=closeMod}}
+
+/* ---------- Novas ações: importar, editar e alerta ---------- */
+const renome=(up,col,campo,velho,novo,extra={})=>arr(S.ab).forEach(d=>{if(d[campo]===velho)up['demandas_abertas/'+d.id+'/'+campo]=novo;Object.entries(extra).forEach(([k,v])=>{if(d[campo]===velho)up['demandas_abertas/'+d.id+'/'+k]=v})});
+Object.assign(acts,{
+  trocas:()=>{const E=[['abertas','Demandas abertas'],['concluidas','Demandas concluídas'],['condominios','Condomínios'],['responsaveis','Responsáveis']];
+    const imps=canEdit()?`<div class="vs" style="padding-top:0"><label>Importar</label>${Object.entries(IMP).map(([k,T])=>`<button class="imp" data-act="impt" data-id="${k}">${ico('down')}<span><b>${T.nome}</b><small>${T.d}</small></span><span class="bd">${T.c.slice(0,3).map(c=>c[1]).join(' · ')}${T.c.length>3?' …':''}</span></button>`).join('')}</div>`:'';
+    $('mod').innerHTML=`<div class="ov"><div class="md vw" style="max-width:640px"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>Importar / Exportar</h2>${imps}<div class="vs"><label>Exportar para Excel</label><div class="chips">${E.map(([k,n])=>`<button data-act="export" data-id="${k}">${n}</button>`).join('')}</div></div></div></div>`;$('m-c').onclick=closeMod},
+  impm:id=>modelo(id).catch(fail),
+  impt:id=>{const T=IMP[id];if(!T)return;
+    $('mod').innerHTML=`<div class="ov"><div class="md vw" style="max-width:680px"><button class="m-x" id="m-c" title="Fechar">&times;</button><div class="vt"><button class="btn s" data-act="trocas">← Voltar</button></div><h2 class="vh" style="margin-bottom:4px">Importar ${T.nome}</h2><p class="hint">${T.d}</p>
+    <div class="vs" style="padding-top:4px"><label>Colunas ${T.sheets?'(nesta ordem)':'(o cabeçalho é reconhecido pelo nome)'}</label><div class="mt"><table class="ct"><thead><tr><th>Coluna</th><th>Obrig.</th><th>Descrição</th><th>Exemplo</th></tr></thead><tbody>${T.c.map(c=>`<tr><td>${c[1]}</td><td>${c[2]===1?'Sim':c[2]===2?'Sim*':'Não'}</td><td>${c[3]}</td><td>${esc(c[4])}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="vs"><label>Regras</label><ul class="nt">${T.nt.map(n=>`<li>${n}</li>`).join('')}</ul></div>
+    <div class="ac" style="justify-content:flex-start"><button class="btn" data-act="impm" data-id="${id}">${ico('up')}Baixar modelo (.xlsx)</button></div>
+    <label class="dz" id="dz"><b>Selecione ou arraste a planilha</b><br>.xlsx, .xls ou .csv<input type="file" accept=".xlsx,.xls,.csv" hidden></label></div></div>`;
+    $('m-c').onclick=closeMod;const dz=$('dz'),inp=dz.querySelector('input'),go=f=>f&&analisar(id,f);inp.onchange=()=>go(inp.files[0]);
+    ['dragenter','dragover'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('on')}));
+    ['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('on')}));dz.addEventListener('drop',e=>go(e.dataTransfer.files[0]))},
+  editc:id=>{const o=S.co[id];if(!o)return;
+    modal('Editar Condomínio',[{k:'nome',n:'Nome *',v:o.nome},{k:'uf',n:'UF *',t:'uf',v:o.uf}],v=>{
+      v.nome=v.nome.toUpperCase();if(!v.nome||!v.uf||v.uf==='__new'){toast('Preencha nome e UF.',1);return false}if(v.nome===o.nome&&v.uf===o.uf)return;
+      const nid='c'+hash(v.nome+v.uf);if(nid!==id&&S.co[nid]){toast('Já existe um condomínio com esse nome nessa UF.',1);return false}
+      const up={};if(nid!==id)up['condominios/'+id]=null;up['condominios/'+nid]=v;up['ufs/'+v.uf]=true;
+      arr(S.ab).forEach(d=>{if(d.condominio===o.nome&&d.uf===o.uf){up['demandas_abertas/'+d.id+'/condominio']=v.nome;up['demandas_abertas/'+d.id+'/uf']=v.uf}});
+      update(R(),up).catch(fail);log('Editou condomínio',`${o.nome} (${o.uf}) → ${v.nome} (${v.uf})`);toast('Salvo. Demandas abertas atualizadas; o histórico mantém o nome antigo.')})},
+  editr:id=>{const o=S.rs[id];if(!o)return;
+    modal('Editar Responsável',[{k:'nome',n:'Nome *',v:o.nome}],v=>{
+      v.nome=v.nome.toUpperCase();if(!v.nome){toast('Informe o nome.',1);return false}if(v.nome===o.nome)return;
+      const nid='r'+hash(v.nome);if(nid!==id&&S.rs[nid]){toast('Já existe um responsável com esse nome.',1);return false}
+      const up={};if(nid!==id)up['responsaveis/'+id]=null;up['responsaveis/'+nid]={nome:v.nome};renome(up,0,'responsavel',o.nome,v.nome);
+      update(R(),up).catch(fail);log('Editou responsável',`${o.nome} → ${v.nome}`);toast('Salvo')})},
+  editp:id=>{const o=S.pb[id];if(!o)return;
+    modal('Editar Problema',[{k:'nome',n:'Nome *',v:o.nome}],v=>{
+      v.nome=v.nome.toUpperCase();if(!v.nome){toast('Informe o nome.',1);return false}if(v.nome===o.nome)return;
+      const nid='p'+hash(v.nome);if(nid!==id&&(S.pb[nid]||PROBS.includes(v.nome))){toast('Já existe um problema com esse nome.',1);return false}
+      const up={};if(nid!==id)up['problemas/'+id]=null;up['problemas/'+nid]={nome:v.nome};renome(up,0,'problema',o.nome,v.nome);
+      update(R(),up).catch(fail);log('Editou problema',`${o.nome} → ${v.nome}`);toast('Salvo')})},
+  editu:id=>{const o=S.us[id];if(!o)return;const self=id===S.user.id;
+    modal('Editar Usuário',[{k:'nome',n:'Nome *',v:o.nome},{k:'email',n:'E-mail * (somente @servis.com)',v:o.email},{k:'senha',n:'Nova senha (em branco = manter a atual)',t:'password'},{k:'perfil',n:'Perfil',t:'select',o:['observador','editor','admin'],v:o.perfil}],async v=>{
+      v.nome=v.nome.toUpperCase();v.email=mail(v.email);if(!v.nome||!v.email){toast('Preencha nome e e-mail.',1);return false}
+      if(!okMail(v.email)){toast('O e-mail deve ser @servis.com.',1);return false}
+      if(arr(S.us).some(u=>u.id!==id&&(u.email||'').toLowerCase()===v.email)){toast('Já existe um usuário com esse e-mail.',1);return false}
+      if(self&&v.perfil!==o.perfil){toast('Você não pode alterar o seu próprio perfil.',1);return false}
+      const d={nome:v.nome,email:v.email,perfil:v.perfil};if(v.senha)d.senha=await sha(v.senha);
+      update(R('usuarios/'+id),d).catch(fail);log('Editou usuário',`${v.email} (${v.perfil})${v.senha?' | senha alterada':''}`);toast('Salvo')})},
+  cfgal:()=>{if(!admin())return;const c=S.cfg?.alerta||{};let v=+c.valor>0?+c.valor:0,u=UN[c.unidade]?c.unidade:'horas';
+    const P=[[30,'minutos'],[1,'horas'],[4,'horas'],[12,'horas'],[1,'dias'],[3,'dias']],fu=(n,k)=>n+' '+UL[k][n===1?0:1];
+    $('mod').innerHTML=`<div class="ov"><div class="md" style="max-width:440px"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>Alerta automático</h2><p class="hint">Demandas abertas há mais tempo que o limite entram em alerta sozinhas, com o ícone piscando no topo da lista. O alerta manual continua disponível em cada demanda.</p>
+    <div class="fg"><label>Entrar em alerta após</label><div class="rw"><input id="al-v" type="number" min="0" value="${v||''}" placeholder="0" style="width:90px"><div class="seg" id="al-u">${Object.keys(UN).map(k=>`<button data-u="${k}">${k}</button>`).join('')}</div></div></div>
+    <div class="chips" id="al-p">${P.map(([n,k])=>`<button data-n="${n}" data-u="${k}">${fu(n,k)}</button>`).join('')}</div><div class="sum" id="al-s"></div>
+    <div class="ac"><button class="btn" id="al-off">Desativar</button><button class="btn p" id="al-ok">Salvar</button></div></div></div>`;
+    const inp=$('al-v'),sm=$('al-s'),draw=()=>{v=Math.max(0,Math.floor(+inp.value||0));
+      document.querySelectorAll('#al-u button').forEach(b=>b.classList.toggle('on',b.dataset.u===u));document.querySelectorAll('#al-p button').forEach(b=>b.classList.toggle('on',+b.dataset.n===v&&b.dataset.u===u));
+      const n=v?arr(S.ab).filter(d=>{const t=new Date(d.data||0).getTime();return t>0&&Date.now()-t>=v*UN[u]}).length:0;
+      sm.innerHTML=v?`Entram em alerta as demandas abertas há mais de <b>${fu(v,u)}</b>.<br>Hoje isso atinge <b>${n}</b> demanda(s).`:'Alerta automático <b style="color:var(--tx2)">desativado</b>.'};
+    inp.oninput=draw;$('al-u').onclick=e=>{if(e.target.dataset.u){u=e.target.dataset.u;draw()}};$('al-p').onclick=e=>{const b=e.target.closest('button');if(b){inp.value=b.dataset.n;u=b.dataset.u;draw()}};
+    const save=n=>{update(R('config/alerta'),{valor:n,unidade:u}).catch(fail);log('Configurou alerta',n?fu(n,u):'desativado');toast(n?'Alerta automático após '+fu(n,u):'Alerta automático desativado');closeMod()};
+    $('al-ok').onclick=()=>save(v);$('al-off').onclick=()=>save(0);$('m-c').onclick=closeMod;draw();inp.focus()}
+});
+document.addEventListener('input',e=>{const m=$('m-er');if(m&&e.target.closest('#mod'))m.textContent=''});
 
 themeUI();listen();
 {let sess=null;try{sess=JSON.parse(localStorage.getItem('ds_user'))}catch(e){}
