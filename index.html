@@ -107,6 +107,7 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
     <div style="position:relative"><button class="ib" data-act="menu" title="Menu"><i data-i="gear"></i></button>
       <div id="menu" class="menu hide">
         <div class="user" style="padding:8px 12px;display:flex;align-items:center;gap:10px"><div class="av" id="u-av" data-act="foto" title="Alterar foto"><span id="u-ai"></span><button class="avx" data-act="fotox" title="Remover foto">&times;</button></div><span><b id="u-n">-</b><small id="u-p"></small></span></div><hr class="mh"><div id="menu-tabs"></div><hr class="mh">
+        <button data-act="cfgal" id="m-cfg" class="hide"><i data-i="alert"></i>Configurar alerta</button>
         <button data-act="trocas"><i data-i="down"></i>Importar / Exportar</button>
         <button data-act="theme"><i id="th-i"></i><span id="th-t">Tema claro</span></button>
         <button data-act="logout"><i data-i="out"></i>Sair</button>
@@ -133,7 +134,7 @@ const IB=(act,i,t,id='',x='')=>`<button class="ib" data-act="${act}" ${id?`data-
 const themeUI=()=>{const l=document.documentElement.dataset.theme==='light';$('th-i').innerHTML=ico(l?'moon':'sun');$('th-t').textContent=l?'Tema escuro':'Tema claro';setLogo()};
 
 let _fx=0;try{_fx=localStorage.getItem('ds_fix')==='1'?1:0}catch(e){}
-const S={fix:!!_fx,fo:_fx,qo:_fx,user:null,tab:'abertas',q:'',st:'',uf:'',pe:'',d1:'',d2:'',cf:'',ac:'',lu:'',page:0,ab:{},co:{},cd:{},rs:{},pb:{},ux:{},us:{},lg:{},pr:{},ch:{},cdOn:0,cdDone:0,cdArr:null,lgOn:0};
+const S={fix:!!_fx,fo:_fx,qo:_fx,user:null,tab:'abertas',q:'',st:'',uf:'',pe:'',d1:'',d2:'',cf:'',ac:'',lu:'',page:0,ab:{},co:{},cd:{},rs:{},pb:{},ux:{},us:{},cfg:{},lg:{},pr:{},ch:{},cdOn:0,cdDone:0,cdArr:null,lgOn:0};
 const PROBS=['INTERFONE','CÂMERAS','CONEXÃO','COMANDOS','FACIAL','APP','PORTÃO','EVENTO','FÍSICO'],STATUS=['CENTRAL','SITUATOR','GEAR'];
 const DOM='@servis.com',mail=v=>{v=String(v||'').trim().toLowerCase();return !v?'':v.includes('@')?v:v+DOM},okMail=v=>v.endsWith(DOM)&&v.length>DOM.length&&!/\s/.test(v);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -157,14 +158,14 @@ const idb=new Promise(r=>{try{const q=indexedDB.open('ds',1);q.onupgradeneeded=(
 const kvGet=async k=>{const d=await idb;return d?new Promise(r=>{const q=d.transaction('k').objectStore('k').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r()}):undefined};
 const kvSet=async(k,v)=>{const d=await idb;if(d)try{d.transaction('k','readwrite').objectStore('k').put(v,k)}catch(e){}};
 const saveT={},later=(k,f)=>{clearTimeout(saveT[k]);saveT[k]=setTimeout(f,400)};
-['ab','co','rs','pb','ux','us'].forEach(k=>S[k]=LS.get(k)||{});S.lg=LS.get('lg')||{};
+['ab','co','rs','pb','ux','us','cfg'].forEach(k=>S[k]=LS.get(k)||{});S.lg=LS.get('lg')||{};
 const noPw=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>{const{senha,...r}=v;return[k,r]}));
 
 /* ---------- Firebase (tudo em paralelo, já na abertura) ---------- */
 let usReady;const usOk=new Promise(r=>usReady=r);
 const sub=(p,k,cb)=>onValue(R(p),s=>{S[k]=s.val()||{};if(k!=='us')later(k,()=>LS.set(k,S[k]));cb?.();sched()},fail);
 function listen(){
-  sub('demandas_abertas','ab');sub('condominios','co');sub('responsaveis','rs');sub('problemas','pb');sub('ufs','ux');
+  sub('demandas_abertas','ab');sub('config','cfg');sub('condominios','co');sub('responsaveis','rs');sub('problemas','pb');sub('ufs','ux');
   sub('usuarios','us',()=>{later('us',()=>LS.set('us',noPw(S.us)));usReady();checkSession()});
 }
 async function ensureCd(){
@@ -214,7 +215,7 @@ async function doLogin(){
   enter(u,1);
 }
 const avT=(u,n)=>`<span class="av sm" ${u?`style="background-image:url(${u})"`:''}>${u?'':esc((n||'?')[0].toUpperCase())}</span>`;
-const setUserUI=()=>{const f=S.foto,a=$('u-av');a.style.backgroundImage=f?`url(${f})`:'';a.classList.toggle('has',!!f);$('u-ai').textContent=f?'':(S.user.nome||'?')[0].toUpperCase();$('u-n').textContent=S.user.nome;$('u-p').textContent=(S.user.perfil||'').toUpperCase()};
+const setUserUI=()=>{$('m-cfg').classList.toggle('hide',S.user?.perfil!=='admin');const f=S.foto,a=$('u-av');a.style.backgroundImage=f?`url(${f})`:'';a.classList.toggle('has',!!f);$('u-ai').textContent=f?'':(S.user.nome||'?')[0].toUpperCase();$('u-n').textContent=S.user.nome;$('u-p').textContent=(S.user.perfil||'').toUpperCase()};
 function initFoto(id){try{S.foto=localStorage.getItem('ds_foto_'+id)||''}catch(e){S.foto=''}
   if(S.fotoOn)return;S.fotoOn=1;onValue(R('fotos/'+id),s=>{S.foto=s.val()||'';try{S.foto?localStorage.setItem('ds_foto_'+id,S.foto):localStorage.removeItem('ds_foto_'+id)}catch(e){}if(S.user)setUserUI()},fail)}
 async function fotoSet(file){try{const b=await createImageBitmap(file),c=document.createElement('canvas');c.width=c.height=160;const m=Math.min(b.width,b.height);
@@ -236,7 +237,7 @@ const TABS=()=>[['abertas','Demandas',Object.keys(S.ab).length],['concluidas','C
 const NAMES={abertas:'Demandas',concluidas:'Concluídas',condominios:'Condomínios',responsaveis:'Responsáveis',problemas:'Problemas',usuarios:'Usuários',logs:'Logs'};
 const TI={abertas:'doc',concluidas:'done',condominios:'bld',responsaveis:'user',problemas:'alert',usuarios:'lock',logs:'list'};
 let navKey='';function renderNav(){const h=TABS().map(([k,n,c])=>`<button class="${S.tab===k?'on':''}" data-act="tab" data-id="${k}">${ico(TI[k])}${n}${c!=null?`<span class="bd">${c}</span>`:''}</button>`).join('');if(h!==navKey){navKey=h;$('menu-tabs').innerHTML=h}}
-const TIPOS={'Criação':/^Criou/,'Edição':/^Editou/,'Conclusão':/^Concluiu/,'Reabertura':/^Reabriu/,'Exclusão':/^Excluiu/,'Prioridade':/prioridade/i,'Cadastro':/^Cadastrou/,'Importação':/^Importou/,'Exportação':/^Exportou/,'Visualização':/^Visualizou/,'Login / Logout':/^(Login|Logout)$/,'Falha de login':/^Falha/};
+const TIPOS={'Criação':/^Criou/,'Edição':/^Editou/,'Conclusão':/^Concluiu/,'Reabertura':/^Reabriu/,'Exclusão':/^Excluiu/,'Alerta':/alerta|prioridade/i,'Cadastro':/^Cadastrou/,'Importação':/^Importou/,'Exportação':/^Exportou/,'Visualização':/^Visualizou/,'Login / Logout':/^(Login|Logout)$/,'Falha de login':/^Falha/};
 const logOpts=(k,cur,all)=>`<option value="">${all}</option>`+[...new Set(arr(S.lg).map(x=>x[k]).filter(Boolean))].sort().map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('');
 const ufs=()=>[...new Set(['CE','PI','MA','AM',...Object.keys(S.ux),...arr(S.co).map(x=>x.uf)].filter(Boolean))];
 function renderBar(){
@@ -279,9 +280,19 @@ const rng=()=>{const n=new Date(),d0=new Date(n.getFullYear(),n.getMonth(),n.get
   if(S.pe==='hoje')return[d0,Infinity];if(S.pe==='7')return[d0-6*D,Infinity];if(S.pe==='30')return[d0-29*D,Infinity];
   if(S.pe==='mes')return[new Date(n.getFullYear(),n.getMonth(),1).getTime(),Infinity];if(S.pe==='ano')return[new Date(n.getFullYear(),0,1).getTime(),Infinity];
   return[S.d1?new Date(S.d1+'T00:00:00').getTime():0,S.d2?new Date(S.d2+'T23:59:59.999').getTime():Infinity]};
+/* ---------- Alerta: automático (por tempo) ou manual (com motivo) ---------- */
+const UN={minutos:6e4,horas:36e5,dias:864e5},UL={minutos:['minuto','minutos'],horas:['hora','horas'],dias:['dia','dias']};
+const alMs=()=>{const c=S.cfg?.alerta||{},v=+c.valor;return v>0?v*(UN[c.unidade]||36e5):0};
+const alTxt=()=>{const c=S.cfg?.alerta||{},v=+c.valor,u=UL[c.unidade]||UL.horas;return v+' '+(v===1?u[0]:u[1])};
+const alInfo=x=>{
+  if(x.prioridade==='SIM')return{m:1,t:String(x.alertaMotivo||'').trim()||'Sem motivo informado'};
+  const ms=alMs(),t0=new Date(x.data||0).getTime();
+  if(ms&&t0>0&&Date.now()-t0>=ms)return{m:0,t:'Alerta automático: demanda aberta há mais de '+alTxt()};
+  return null;
+};
 function rows(){
   const q=S.q.toLowerCase(),t=S.tab;
-  if(t==='abertas'||t==='concluidas'){const[a,b]=t==='concluidas'?rng():[0,Infinity];const l=(t==='abertas'?abArr():cdArr()).filter(x=>(!q||x._s.includes(q))&&(!S.uf||x.uf===S.uf)&&(!S.st||x.status===S.st)&&x._t>=a&&x._t<=b);return t==='abertas'?l.sort((x,y)=>(y.prioridade==='SIM')-(x.prioridade==='SIM')):l}
+  if(t==='abertas'||t==='concluidas'){const[a,b]=t==='concluidas'?rng():[0,Infinity];const l=(t==='abertas'?abArr():cdArr()).filter(x=>(!q||x._s.includes(q))&&(!S.uf||x.uf===S.uf)&&(!S.st||x.status===S.st)&&x._t>=a&&x._t<=b);return t==='abertas'?l.sort((x,y)=>(!!alInfo(y))-(!!alInfo(x))):l}
   if(t==='condominios'){const o=new Set(Object.values(S.ab).map(d=>d.condominio+'|'+d.uf));return arr(S.co).filter(x=>hit(x,q)&&(!S.uf||x.uf===S.uf)&&(S.cf!=='ab'||o.has(x.nome+'|'+x.uf))).sort((a,b)=>a.nome.localeCompare(b.nome))}
   if(t==='problemas'){const reg=new Map(arr(S.pb).map(p=>[p.nome,p.id]));return probNames().filter(n=>!q||n.toLowerCase().includes(q)).map(n=>({id:reg.get(n)||'',nome:n}))}
   if(t==='responsaveis')return arr(S.rs).filter(x=>hit(x,q)).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -289,7 +300,7 @@ function rows(){
   {const[a,b]=rng();return arr(S.lg).filter(x=>{const m=new Date(x.t).getTime();return hit(x,q)&&(!S.ac||TIPOS[S.ac].test(x.a||''))&&(!S.lu||x.u===S.lu)&&m>=a&&m<=b}).sort((a,b)=>b.t.localeCompare(a.t))}
 }
 const dur=ms=>{if(!(ms>0))return'00:00:00';const t=Math.floor(ms/1e3),d=Math.floor(t/86400),p=n=>String(n).padStart(2,'0');return(d?d+'d ':'')+p(Math.floor(t%86400/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60)};
-setInterval(()=>{if(S.tab!=='abertas'||document.hidden)return;const n=Date.now();document.querySelectorAll('.tm').forEach(e=>e.textContent=dur(n-e.dataset.t))},1000);
+setInterval(()=>{if(S.tab!=='abertas'||document.hidden)return;const n=Date.now(),ms=alMs();let ch=0;document.querySelectorAll('.tm').forEach(e=>{const t=+e.dataset.t;e.textContent=dur(n-t);const r=e.closest('tr');if(r&&ms&&t>0&&!r.dataset.al&&n-t>=ms)ch=1});if(ch)sched()},1000);
 const tbl=(h,b)=>`<div class="tw"><table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${b}</tbody></table></div>`;
 const del=(k,id)=>IB('del','trash','Excluir',id,`data-k="${k}"`);
 function render(){
@@ -300,7 +311,7 @@ function render(){
   const l=rows();
   if(!l.length&&['abertas','concluidas'].includes(t)){S._lh='';$('list').innerHTML=`<div class="emp"><b>Nenhuma demanda ${t==='abertas'?'aberta':'concluída'}</b>${t==='abertas'?'Clique em "Nova" para registrar uma demanda em tratamento.':'O histórico aparecerá aqui.'}</div>`;return}
   const p=l.slice(S.page*PS,S.page*PS+PS);let h='';
-  if(t==='abertas')h=tbl(['Data','UF','Condomínio','Descrição','Problema','Responsável','Status','Tratativa','Tempo',''],p.map(x=>`<tr data-act="view" data-id="${x.id}"><td>${fmt(x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td>${esc(x.status)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td><span class="tm" data-t="${new Date(x.data||0).getTime()}">${dur(Date.now()-new Date(x.data||0).getTime())}</span></td><td><span class="acts">${ed?IB('prio','alert',x.prioridade==='SIM'?'Remover prioridade':'Marcar prioridade',x.id,x.prioridade==='SIM'?'data-pri="1"':'')+IB('edit','edit','Editar',x.id)+IB('done','check','Concluir',x.id)+del('demandas_abertas',x.id):''}</span></td></tr>`).join(''));
+  if(t==='abertas')h=tbl(['Data','UF','Condomínio','Descrição','Problema','Responsável','Status','Tratativa','Tempo',''],p.map(x=>{const al=alInfo(x);return `<tr data-act="view" data-id="${x.id}" ${al?'data-al="1"':''}><td>${fmt(x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td>${esc(x.status)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td><span class="tm" data-t="${new Date(x.data||0).getTime()}">${dur(Date.now()-new Date(x.data||0).getTime())}</span></td><td><span class="acts">${ed?IB('prio','alert',al?esc(al.t):'Marcar alerta',x.id,al?'data-pri="1"':'')+IB('edit','edit','Editar',x.id)+IB('done','check','Concluir',x.id)+del('demandas_abertas',x.id):''}</span></td></tr>`}).join(''));
   if(t==='concluidas')h=tbl(['Conclusão','UF','Condomínio','Descrição','Problema','Responsável','Tratativa','Técnico',''],p.map(x=>`<tr data-act="view" data-c="1" data-id="${x.id}"><td>${fmt(x.dataConclusao||x.data)}</td><td><span class="tag">${esc(x.uf)}</span></td><td title="${esc(x.condominio)}">${esc(x.condominio)}</td><td title="${esc(x.descricao)}">${esc(x.descricao)}</td><td title="${esc(x.problema)}">${esc(x.problema)}</td><td title="${esc(x.responsavel)}">${esc(x.responsavel)}</td><td title="${esc(x.tratativa)}">${esc(x.tratativa)}</td><td>${esc(x.tecnico)}</td><td><span class="acts">${ed?IB('reopen','undo','Reabrir',x.id):''}${admin()?del('demandas_concluidas',x.id):''}</span></td></tr>`).join(''));
   if(t==='condominios')h=tbl(['Condomínio','UF',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td><span class="tag">${esc(x.uf)}</span></td><td>${ed?del('condominios',x.id):''}</td></tr>`).join(''));
   if(t==='responsaveis')h=tbl(['Nome',''],p.map(x=>`<tr><td>${esc(x.nome)}</td><td>${ed?del('responsaveis',x.id):''}</td></tr>`).join(''));
@@ -317,7 +328,14 @@ const askYes=(t,msg,lb)=>new Promise(res=>{const o=document.createElement('div')
   o.innerHTML=`<div class="md" style="max-width:360px"><button class="m-x" title="Fechar">&times;</button><h2>${t}</h2><p style="line-height:1.5;margin-bottom:14px">${msg}</p><div class="ac"><button class="btn p">${lb}</button></div></div>`;
   const done=v=>{o.remove();res(v)};o.querySelector('.m-x').onclick=()=>done(false);o.querySelector('.btn').onclick=()=>done(true);
   o.addEventListener('mousedown',e=>{if(e.target===o)done(false)});document.body.appendChild(o);o.querySelector('.btn').focus()});
-const PQ=['Remover prioridade','Este atendimento está em <b>alerta</b>. Deseja realmente remover a prioridade?','Remover'];
+const PQ=['Remover alerta','Este atendimento está em <b>alerta manual</b>. Deseja realmente remover o alerta?','Remover'];
+function alertaModal(d){
+  modal('Alerta manual',[{k:'motivo',n:`${esc(d.condominio)} — ${esc(d.descricao)}<br><br>Motivo do alerta *`,t:'area',v:''}],v=>{
+    if(!v.motivo){toast('Informe o motivo do alerta.',1);return false}
+    update(R('demandas_abertas/'+d.id),{prioridade:'SIM',alertaMotivo:v.motivo,alertaPor:S.user.nome||'',alertaEm:new Date().toISOString()}).catch(fail);
+    log('Marcou alerta manual',`${desc(d)} | motivo: ${v.motivo}`);toast('Alerta ativado');
+  },'Ativar alerta');
+}
 const askAdmin=()=>new Promise(res=>{
   $('mod').innerHTML=`<div class="ov"><div class="md" style="max-width:360px"><button class="m-x" id="a-x" title="Fechar">&times;</button><h2>Confirmar exclusão</h2><div class="fg"><label>Senha de administrador</label><input id="a-pw" type="password" autocomplete="off"></div><p id="a-er" style="color:var(--dg);font-size:12px;min-height:16px"></p><div class="ac"><button class="btn p" id="a-ok">Excluir</button></div></div></div>`;
   const done=v=>{closeMod();res(v)},pw=$('a-pw');
@@ -358,9 +376,13 @@ function formDemanda(d={}){
     {k:'condominio',n:'Condomínio *',v:d.condominio,l:conds.map(c=>c.nome)},{k:'uf',n:'UF *',t:'uf',v:d.uf},
     {k:'descricao',n:'Reclamação / Descrição *',t:'area',v:d.descricao},
     {k:'problema',n:'Problema',t:'prob',o:['',...probNames()],v:d.problema||''},{k:'responsavel',n:'Responsável',t:'select',o:respNames(),v:d.responsavel||''},
-    {k:'status',n:'Status',t:'select',o:STATUS,v:d.status||'CENTRAL'},{k:'prioridade',n:'Prioridade',t:'select',o:['NORMAL','PRIORIDADE'],v:d.prioridade==='SIM'?'PRIORIDADE':'NORMAL'},{k:'tratativa',n:'Tratativa / Observação',t:'area',v:d.tratativa}],
+    {k:'status',n:'Status',t:'select',o:STATUS,v:d.status||'CENTRAL'},{k:'prioridade',n:'Alerta manual',t:'select',o:['NORMAL','ALERTA'],v:d.prioridade==='SIM'?'ALERTA':'NORMAL'},{k:'alertaMotivo',n:'Motivo do alerta (obrigatório se Alerta manual = ALERTA)',t:'area',v:d.alertaMotivo},{k:'tratativa',n:'Tratativa / Observação',t:'area',v:d.tratativa}],
   async v=>{
-    v.problema=(v.problema==='__new'?'':v.problema||'').toUpperCase();v.prioridade=v.prioridade==='PRIORIDADE'?'SIM':'';if(d.prioridade==='SIM'&&!v.prioridade&&!await askYes(...PQ))return false;v.condominio=v.condominio.toUpperCase();v.descricao=v.descricao.toUpperCase();v.responsavel=v.responsavel.toUpperCase();
+    v.problema=(v.problema==='__new'?'':v.problema||'').toUpperCase();v.prioridade=v.prioridade==='ALERTA'?'SIM':'';
+    if(v.prioridade&&!v.alertaMotivo){toast('Informe o motivo do alerta.',1);return false}
+    if(d.prioridade==='SIM'&&!v.prioridade&&!await askYes(...PQ))return false;
+    if(v.prioridade){if(d.prioridade==='SIM'){v.alertaPor=d.alertaPor||'';v.alertaEm=d.alertaEm||''}else{v.alertaPor=S.user.nome||'';v.alertaEm=new Date().toISOString()}}else{v.alertaMotivo=v.alertaPor=v.alertaEm=''}
+    v.condominio=v.condominio.toUpperCase();v.descricao=v.descricao.toUpperCase();v.responsavel=v.responsavel.toUpperCase();
     if(!v.condominio||!v.uf||!v.descricao){toast('Preencha condomínio, UF e descrição.',1);return false}
     if(v.problema&&!probNames().includes(v.problema)){update(R('problemas/p'+hash(v.problema)),{nome:v.problema}).catch(fail);log('Cadastrou problema',v.problema)}
     const{id:_,...rest}=d,id=d.id||genId(),up={};
@@ -387,7 +409,16 @@ const acts={
   theme:()=>{const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';localStorage.setItem('ds_theme',h.dataset.theme);themeUI()},
   logout:()=>{log('Logout');localStorage.removeItem('ds_user');setTimeout(()=>location.reload(),150)},
   pg:id=>{S.page=Math.max(0,S.page+ +id);render()},
-  prio:async id=>{const d=S.ab[id];if(!d)return;const on=d.prioridade==='SIM';if(on&&!await askYes(...PQ))return;update(R('demandas_abertas/'+id),{prioridade:on?'':'SIM'}).catch(fail);log(on?'Removeu prioridade':'Marcou prioridade',desc(d))},
+  prio:async id=>{const d=S.ab[id];if(!d)return;
+    if(d.prioridade!=='SIM')return alertaModal({id,...d});
+    if(!await askYes(...PQ))return;
+    update(R('demandas_abertas/'+id),{prioridade:'',alertaMotivo:'',alertaPor:'',alertaEm:''}).catch(fail);log('Removeu alerta',desc(d)+(d.alertaMotivo?' | motivo era: '+d.alertaMotivo:''))},
+  cfgal:()=>{if(!admin())return;const c=S.cfg?.alerta||{};
+    modal('Configurar alerta automático',[{k:'valor',n:'Entrar em alerta após (0 = desativado)',t:'number',v:c.valor??''},{k:'unidade',n:'Unidade',t:'select',o:['minutos','horas','dias'],v:c.unidade||'horas'}],v=>{
+      const n=Math.floor(+v.valor);if(!(n>=0)){toast('Informe um número válido.',1);return false}
+      update(R('config/alerta'),{valor:n,unidade:v.unidade}).catch(fail);
+      log('Configurou alerta',n?`${n} ${v.unidade}`:'desativado');toast(n?'Alerta automático após '+n+' '+v.unidade:'Alerta automático desativado');
+    })},
   trocas:()=>{const E=[['abertas','Demandas abertas'],['concluidas','Demandas concluídas'],['condominios','Condomínios'],['responsaveis','Responsáveis']];
     $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><h2>Importar / Exportar</h2><div class="vs" style="padding-top:0"><label>Exportar para Excel</label>${E.map(([k,n])=>`<button class="btn li" data-act="export" data-id="${k}">${ico('up')}${n}</button>`).join('')}</div>${canEdit()?`<div class="vs"><label>Importar</label><button class="btn li" data-act="importc">${ico('down')}Condomínios (planilha: CONDOMINIO e UF, uma aba por UF)</button><button class="btn li" data-act="import">${ico('down')}Planilha de demandas (abas CENTRAL / CONCLUIDO)</button></div>`:''}</div></div>`;$('m-c').onclick=closeMod},
   lgmore:()=>loadOlder(),
@@ -399,11 +430,11 @@ const acts={
   filt:()=>{S.fo=!S.fo;const p=$('fp');if(p)p.hidden=!S.fo;$('bar').querySelector('[data-act=filt]')?.classList.toggle('on',S.fo)},
   nova:()=>formDemanda(),edit:id=>formDemanda({id,...S.ab[id]}),done:concluir,
   view:(id,el)=>{const d=(el.dataset.c?S.cd:S.ab)[id];if(!d)return;
-    const t0=new Date(d.data||0).getTime(),t1=d.dataConclusao?new Date(d.dataConclusao).getTime():0;
+    const al=el.dataset.c?(d.prioridade==='SIM'?{t:String(d.alertaMotivo||'').trim()||'Sem motivo informado'}:null):alInfo(d),t0=new Date(d.data||0).getTime(),t1=d.dataConclusao?new Date(d.dataConclusao).getTime():0;
     const tm=el.dataset.c?(t1?`<span class="tm">${dur(t1-t0)}</span>`:''):`<span class="tm" data-t="${t0}">${dur(Date.now()-t0)}</span>`;
     const M=[['Data',d.data&&fmt(d.data)],['Conclusão',d.dataConclusao&&fmt(d.dataConclusao)],['Problema',d.problema],['Responsável',d.responsavel],['Status',d.status],['Técnico',d.tecnico]].filter(x=>x[1]);
     const T=[['Descrição',d.descricao],['Tratativa',d.tratativa],['Tratativa SAC',d.tratativaSac]].filter(x=>x[1]);
-    $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><div class="vt"><span class="tag">${esc(d.uf)}</span>${d.prioridade==='SIM'?`<span class="pri" title="Prioridade">${ico('alert')}</span>`:''}${tm?`<span class="vtm">${el.dataset.c?'Duração ':''}${tm}</span>`:''}</div><h2 class="vh">${esc(d.condominio)}</h2>${M.length?`<div class="vg">${M.map(x=>`<div><label>${x[0]}</label><b>${esc(x[1])}</b></div>`).join('')}</div>`:''}${T.map(x=>`<div class="vs"><label>${x[0]}</label><p>${esc(x[1])}</p></div>`).join('')}</div></div>`;
+    $('mod').innerHTML=`<div class="ov"><div class="md vw"><button class="m-x" id="m-c" title="Fechar">&times;</button><div class="vt"><span class="tag">${esc(d.uf)}</span>${al?`<span class="pri" title="${esc(al.t)}">${ico('alert')}</span>`:''}${tm?`<span class="vtm">${el.dataset.c?'Duração ':''}${tm}</span>`:''}</div><h2 class="vh">${esc(d.condominio)}</h2>${M.length?`<div class="vg">${M.map(x=>`<div><label>${x[0]}</label><b>${esc(x[1])}</b></div>`).join('')}</div>`:''}${T.map(x=>`<div class="vs"><label>${x[0]}</label><p>${esc(x[1])}</p></div>`).join('')}</div></div>`;
     $('m-c').onclick=closeMod;log('Visualizou demanda',desc(d))},
   reopen:(id)=>{const d=S.cd[id];if(!d||!confirm('Reabrir esta demanda?'))return;const{dataConclusao,...r}=d;
     update(R(),{['demandas_concluidas/'+id]:null,['demandas_abertas/'+id]:r}).catch(fail);log('Reabriu demanda',desc(d))},
@@ -420,7 +451,7 @@ const acts={
   import:()=>{closeMod();const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importar(i.files[0]);i.click()},
   importc:()=>{closeMod();const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>i.files[0]&&importarCond(i.files[0]);i.click()},
   export:async(id)=>{
-    closeMod();const t=id,m={abertas:x=>({DATA:fmt(x.data),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,STATUS:x.status,PRIORIDADE:x.prioridade,TRATATIVA:x.tratativa}),
+    closeMod();const t=id,m={abertas:x=>({DATA:fmt(x.data),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,STATUS:x.status,ALERTA:x.prioridade==='SIM'?'SIM':'',MOTIVO_ALERTA:x.alertaMotivo,TRATATIVA:x.tratativa}),
       concluidas:x=>({DATA:fmt(x.data),CONCLUSAO:fmt(x.dataConclusao),UF:x.uf,CONDOMINIO:x.condominio,DESCRICAO:x.descricao,PROBLEMA:x.problema,RESPONSAVEL:x.responsavel,TRATATIVA:x.tratativa,TECNICO:x.tecnico,TRATATIVA_SAC:x.tratativaSac}),
       condominios:x=>({NOME:x.nome,UF:x.uf}),responsaveis:x=>({NOME:x.nome})}[t];if(!m)return;
     try{await xl()}catch(e){return fail(e)}
