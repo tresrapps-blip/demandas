@@ -101,6 +101,8 @@ td{background:var(--bg2);white-space:nowrap;overflow:hidden;text-overflow:ellips
 .rw{display:flex;gap:12px;align-items:center}.seg{display:inline-flex;border:1px solid var(--bd)}.seg button{background:transparent;border:0;color:var(--tx2);padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600}.seg button:hover{color:var(--tx)}.seg button.on{color:var(--tx);background:var(--hov);box-shadow:inset 0 -2px var(--pr)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px}.chips button{background:transparent;border:1px solid var(--bd);color:var(--tx2);padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600}.chips button:hover{color:var(--tx);border-color:var(--sbh)}.chips button.on{border-color:var(--pr);color:var(--pr)}
 .sum{padding:12px 0;border-top:1px solid var(--bd);font-size:12.5px;line-height:1.6}.sum b{color:var(--pr)}
+.cf h2{font-size:15px;margin-bottom:8px}.cfm{color:var(--tx2);font-size:13px;line-height:1.55;margin-bottom:18px}.cfm b{color:var(--tx)}
+.btn.dgr{color:var(--dg)}.btn.dgr:hover{background:color-mix(in srgb,var(--dg) 12%,transparent)}.cf .btn.p{box-shadow:inset 0 -2px var(--pr)}.cf .btn.p.dgr{box-shadow:inset 0 -2px var(--dg)}
 </style>
 </head>
 <body>
@@ -338,10 +340,12 @@ function render(){
 
 /* ---------- Modal ---------- */
 const closeMod=()=>$('mod').innerHTML='';
-const askYes=(t,msg,lb)=>new Promise(res=>{const o=document.createElement('div');o.className='ov';o.style.zIndex=1000;
-  o.innerHTML=`<div class="md" style="max-width:360px"><button class="m-x" title="Fechar">&times;</button><h2>${t}</h2><p style="line-height:1.5;margin-bottom:14px">${msg}</p><div class="ac"><button class="btn p">${lb}</button></div></div>`;
-  const done=v=>{o.remove();res(v)};o.querySelector('.m-x').onclick=()=>done(false);o.querySelector('.btn').onclick=()=>done(true);
-  o.addEventListener('mousedown',e=>{if(e.target===o)done(false)});document.body.appendChild(o);o.querySelector('.btn').focus()});
+const askYes=(t,msg,lb)=>new Promise(res=>{const o=document.createElement('div'),dg=/remover|excluir|apagar|deletar/i.test(lb);o.className='ov';o.style.zIndex=1000;
+  o.innerHTML=`<div class="md cf" style="max-width:380px"><h2>${t}</h2><p class="cfm">${msg}</p><div class="ac"><button class="btn" data-n>Cancelar</button><button class="btn p ${dg?'dgr':''}" data-y>${lb}</button></div></div>`;
+  const done=v=>{document.removeEventListener('keydown',kd,true);o.remove();res(v)},kd=e=>{if(e.key==='Escape'){e.stopPropagation();done(false)}else if(e.key==='Enter'){e.preventDefault();done(true)}};
+  o.querySelector('[data-n]').onclick=()=>done(false);o.querySelector('[data-y]').onclick=()=>done(true);
+  o.addEventListener('click',e=>e.stopPropagation());o.addEventListener('mousedown',e=>{if(e.target===o)done(false)});
+  document.addEventListener('keydown',kd,true);document.body.appendChild(o);o.querySelector('[data-y]').focus()});
 const askUF=()=>new Promise(res=>{const o=document.createElement('div');o.className='ov';o.style.zIndex=1000;
   o.innerHTML=`<div class="md" style="max-width:340px"><button class="m-x" title="Fechar">&times;</button><h2>Nova UF</h2><div class="fg"><label>Sigla com 2 letras (ex.: BA)</label><input maxlength="2" style="text-transform:uppercase"></div><div class="ac"><button class="btn p">Adicionar</button></div></div>`;
   const i=o.querySelector('input'),done=v=>{o.remove();res(v)};o.querySelector('.m-x').onclick=()=>done(null);o.querySelector('.btn').onclick=()=>done(i.value);i.onkeydown=e=>{if(e.key==='Enter')done(i.value)};
